@@ -2,16 +2,20 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { LogIn } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loadingAction, setLoadingAction] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoadingAction(true);
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -20,12 +24,15 @@ export default function Login() {
       });
       const data = await res.json();
       if (res.ok) {
+        login(data.user);
         navigate('/admin');
       } else {
         setError(data.error || 'Erro ao fazer login');
       }
     } catch (err) {
       setError('Erro de conexão');
+    } finally {
+      setLoadingAction(false);
     }
   };
 

@@ -1,13 +1,29 @@
 export interface Product {
-  id: string;
+  id: string | number;
   name: string;
   image: string;
   description: string;
   colors: string[];
   consortiumPlanImage?: string;
+  liberacredImage?: string;
   financingInfo?: string;
   hasLiberacred?: boolean;
+  images?: string[];
   threeSixtyImages?: string[];
+  year?: number;
+  price?: string | number;
+  mileage?: string | number;
+  brand?: string;
+  condition?: string;
+  fuel?: string;
+  transmission?: string;
+  color?: string;
+  optionals?: string[];
+  is_highlighted?: boolean;
+  is_new?: boolean;
+  has_consortium?: boolean;
+  show_consortium_plans?: boolean;
+  consortium_plans?: { installments: number; value: string }[];
 }
 
 export interface FinancingFormData {

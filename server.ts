@@ -4,8 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
-import Database from 'better-sqlite3';
+import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -13,40 +12,21 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const db = new Database('database.db');
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || '';
+const SUPABASE_SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-// Initialize Database
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE,
-    password_hash TEXT,
-    display_name TEXT,
-    role_title TEXT,
-    profile_image TEXT,
-    whatsapp TEXT,
-    instagram TEXT,
-    facebook TEXT,
-    slug TEXT UNIQUE
-  );
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE) {
+  console.warn('Supabase configuration missing in .env!');
+}
 
-  CREATE TABLE IF NOT EXISTS products (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER,
-    name TEXT,
-    image TEXT,
-    description TEXT,
-    colors TEXT,
-    consortium_image TEXT,
-    has_liberacred INTEGER,
-    FOREIGN KEY(user_id) REFERENCES users(id)
-  );
-`);
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE, {
+  auth: { autoRefreshToken: false, persistSession: false }
+});
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json());
   app.use(cookieParser());
@@ -54,13 +34,13 @@ async function startServer() {
   // Auth Middleware
   const authenticate = (req: any, res: any, next: any) => {
     const token = req.cookies.token;
-    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+    if (!token) return res.status(401).json({ error: 'Não autorizado' });
     try {
       const decoded = jwt.verify(token, JWT_SECRET);
       req.user = decoded;
       next();
     } catch (err) {
-      res.status(401).json({ error: 'Invalid token' });
+      res.status(401).json({ error: 'Token inválido' });
     }
   };
 
@@ -68,10 +48,29 @@ async function startServer() {
   app.post('/api/auth/register', async (req, res) => {
     const { username, password, display_name, role_title, slug } = req.body;
     try {
-      const hash = await bcrypt.hash(password, 10);
-      const stmt = db.prepare('INSERT INTO users (username, password_hash, display_name, role_title, slug) VALUES (?, ?, ?, ?, ?)');
-      const info = stmt.run(username, hash, display_name, role_title, slug);
-      res.json({ id: info.lastInsertRowid });
+      // 1. Create User in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: username.includes('@') ? username : `${username}@smartcartao.com`,
+        password: password,
+        email_confirm: true
+      });
+
+      if (authError) throw authError;
+
+      // 2. Create Profile in Profiles Table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          username,
+          display_name,
+          role_title,
+          slug
+        });
+
+      if (profileError) throw profileError;
+
+      res.json({ id: authData.user.id });
     } catch (err: any) {
       res.status(400).json({ error: err.message });
     }
@@ -79,13 +78,28 @@ async function startServer() {
 
   app.post('/api/auth/login', async (req, res) => {
     const { username, password } = req.body;
-    const user: any = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
-    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+    try {
+      const email = username.includes('@') ? username : `${username}@smartcartao.com`;
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) throw error;
+
+      // Get profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+
+      const token = jwt.sign({ id: data.user.id, email: data.user.email }, JWT_SECRET, { expiresIn: '7d' });
+      res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'none' });
+      res.json({ user: { id: data.user.id, username, slug: profile?.slug } });
+    } catch (err: any) {
+      res.status(401).json({ error: 'Credenciais inválidas' });
     }
-    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
-    res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'none' });
-    res.json({ user: { id: user.id, username: user.username, slug: user.slug } });
   });
 
   app.post('/api/auth/logout', (req, res) => {
@@ -93,50 +107,149 @@ async function startServer() {
     res.json({ success: true });
   });
 
-  app.get('/api/me', authenticate, (req: any, res) => {
-    const user = db.prepare('SELECT id, username, display_name, role_title, profile_image, whatsapp, instagram, facebook, slug FROM users WHERE id = ?').get(req.user.id);
-    res.json(user);
+  app.get('/api/me', authenticate, async (req: any, res) => {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', req.user.id)
+      .single();
+    
+    if (error) return res.status(404).json({ error: 'Perfil não encontrado' });
+    res.json(profile);
   });
 
-  app.put('/api/me', authenticate, (req: any, res) => {
-    const { display_name, role_title, profile_image, whatsapp, instagram, facebook } = req.body;
-    const stmt = db.prepare(`
-      UPDATE users 
-      SET display_name = ?, role_title = ?, profile_image = ?, whatsapp = ?, instagram = ?, facebook = ?
-      WHERE id = ?
-    `);
-    stmt.run(display_name, role_title, profile_image, whatsapp, instagram, facebook, req.user.id);
+  app.put('/api/me', authenticate, async (req: any, res) => {
+    const { display_name, role_title, profile_image, card_bottom_image, footer_text, primary_color, background_color, social_links, marquee_text, show_marquee, marquee_speed, whatsapp, instagram, facebook } = req.body;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ display_name, role_title, profile_image, card_bottom_image, footer_text, primary_color, background_color, social_links, marquee_text, show_marquee, marquee_speed, whatsapp, instagram, facebook })
+      .eq('id', req.user.id);
+    
+    if (error) return res.status(400).json({ error: error.message });
     res.json({ success: true });
   });
 
+  app.post('/api/auth/change-password', authenticate, async (req: any, res) => {
+    const { password } = req.body;
+    try {
+      const { error } = await supabase.auth.admin.updateUserById(req.user.id, {
+        password: password
+      });
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message || 'Erro ao alterar senha' });
+    }
+  });
+
   // Public Profile Route
-  app.get('/api/profile/:slug', (req, res) => {
-    const user: any = db.prepare('SELECT id, display_name, role_title, profile_image, whatsapp, instagram, facebook, slug FROM users WHERE slug = ?').get(req.params.slug);
-    if (!user) return res.status(404).json({ error: 'Profile not found' });
+  app.get('/api/profile/:slug', async (req, res) => {
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('slug', req.params.slug)
+      .single();
+
+    if (profileError || !profile) return res.status(404).json({ error: 'Perfil não encontrado' });
     
-    const products = db.prepare('SELECT * FROM products WHERE user_id = ?').all(user.id);
-    res.json({ user, products });
+    const { data: products } = await supabase
+      .from('products')
+      .select('*')
+      .eq('user_id', profile.id);
+
+    res.json({ user: profile, products: products || [] });
   });
 
   // Product Routes
-  app.get('/api/products', authenticate, (req: any, res) => {
-    const products = db.prepare('SELECT * FROM products WHERE user_id = ?').all(req.user.id);
+  app.get('/api/products', authenticate, async (req: any, res) => {
+    const { data: products, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('user_id', req.user.id);
+    
+    if (error) return res.status(400).json({ error: error.message });
     res.json(products);
   });
 
-  app.post('/api/products', authenticate, (req: any, res) => {
-    const { name, image, description, colors, consortium_image, has_liberacred } = req.body;
-    const stmt = db.prepare(`
-      INSERT INTO products (user_id, name, image, description, colors, consortium_image, has_liberacred)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `);
-    const info = stmt.run(req.user.id, name, image, description, JSON.stringify(colors), consortium_image, has_liberacred ? 1 : 0);
-    res.json({ id: info.lastInsertRowid });
+  app.post('/api/products', authenticate, async (req: any, res) => {
+    const { name, image, description, colors, images, consortium_image, liberacred_image, has_liberacred, has_consortium, is_highlighted, is_new, year, price, mileage, brand, condition, fuel, transmission, color, optionals, show_consortium_plans, consortium_plans } = req.body;
+    const { data, error } = await supabase
+      .from('products')
+      .insert({
+        user_id: req.user.id,
+        name,
+        image,
+        description,
+        colors,
+        images,
+        consortium_image,
+        liberacred_image,
+        has_liberacred: !!has_liberacred,
+        has_consortium: has_consortium !== undefined ? !!has_consortium : true,
+        is_highlighted: !!is_highlighted,
+        is_new: !!is_new,
+        year: year || null,
+        price: price || null,
+        mileage: mileage || null,
+        brand,
+        condition,
+        fuel,
+        transmission,
+        color,
+        optionals: Array.isArray(optionals) ? JSON.stringify(optionals) : (optionals || '[]'),
+        show_consortium_plans: !!show_consortium_plans,
+        consortium_plans: Array.isArray(consortium_plans) ? JSON.stringify(consortium_plans) : (consortium_plans || '[]')
+      })
+      .select('id')
+      .single();
+    
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ id: data.id });
   });
 
-  app.delete('/api/products/:id', authenticate, (req: any, res) => {
-    const stmt = db.prepare('DELETE FROM products WHERE id = ? AND user_id = ?');
-    stmt.run(req.params.id, req.user.id);
+  app.put('/api/products/:id', authenticate, async (req: any, res) => {
+    const { name, image, description, colors, images, consortium_image, liberacred_image, has_liberacred, has_consortium, is_highlighted, is_new, year, price, mileage, brand, condition, fuel, transmission, color, optionals, show_consortium_plans, consortium_plans } = req.body;
+    const { error } = await supabase
+      .from('products')
+      .update({
+        name,
+        image,
+        description,
+        colors,
+        images,
+        consortium_image,
+        liberacred_image,
+        has_liberacred: !!has_liberacred,
+        has_consortium: has_consortium !== undefined ? !!has_consortium : true,
+        is_highlighted: !!is_highlighted,
+        is_new: !!is_new,
+        year: year || null,
+        price: price || null,
+        mileage: mileage || null,
+        brand,
+        condition,
+        fuel,
+        transmission,
+        color,
+        optionals: Array.isArray(optionals) ? JSON.stringify(optionals) : (optionals || '[]'),
+        show_consortium_plans: !!show_consortium_plans,
+        consortium_plans: Array.isArray(consortium_plans) ? JSON.stringify(consortium_plans) : (consortium_plans || '[]')
+      })
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id);
+    
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ success: true });
+  });
+
+  app.delete('/api/products/:id', authenticate, async (req: any, res) => {
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id);
+    
+    if (error) return res.status(400).json({ error: error.message });
     res.json({ success: true });
   });
 

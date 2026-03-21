@@ -13,7 +13,7 @@ import AdminDashboard from './pages/AdminDashboard';
 function Landing() {
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center">
-      <h1 className="text-5xl font-bold text-blue-600 mb-4 font-heading">O Meu Cartão</h1>
+      <h1 className="text-5xl font-bold text-blue-600 mb-4 font-heading">Smart Cartão</h1>
       <p className="text-xl text-gray-600 mb-8 max-w-md">
         Crie seu cartão de visita digital com catálogo de produtos em minutos.
       </p>

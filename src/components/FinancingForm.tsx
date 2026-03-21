@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FinancingFormData } from '../types';
 import { Send } from 'lucide-react';
 
@@ -20,6 +20,14 @@ export default function FinancingForm({ initialModel, onSubmitSuccess }: Financi
     cnh: 'sim',
     renda: ''
   });
+  const [products, setProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/products')
+      .then(res => res.json())
+      .then(data => setProducts(Array.isArray(data) ? data : []))
+      .catch(err => console.error('Error fetching products for simulation:', err));
+  }, []);
 
   const maskCpf = (value: string) => {
     return value
@@ -165,13 +173,9 @@ Renda: ${formData.renda}`;
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
         >
           <option value="">Selecione um modelo</option>
-          <option value="Neos Connected">Neos Connected</option>
-          <option value="Fluo ABS Connected">Fluo ABS Connected</option>
-          <option value="Nmax 160 ABS">Nmax 160 ABS</option>
-          <option value="Xmax 300 Connected">Xmax 300 Connected</option>
-          <option value="Fazer FZ15 ABS">Fazer FZ15 ABS</option>
-          <option value="Factor 150 ED UBS">Factor 150 ED UBS</option>
-          <option value="Lander 250 ABS">Lander 250 ABS</option>
+          {products.map((p) => (
+            <option key={p.id} value={p.name}>{p.name}</option>
+          ))}
         </select>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
