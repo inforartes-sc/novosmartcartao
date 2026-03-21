@@ -56,12 +56,12 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-6 border-b border-gray-100 font-heading">
+      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0">
+        <div className="p-6 border-b border-gray-100 font-heading shrink-0">
           <h2 className="text-xl font-bold text-[#003da5]">Admin Panel</h2>
         </div>
         
-        <nav className="flex-grow p-4 space-y-2">
+        <nav className="flex-grow p-4 space-y-2 overflow-y-auto scrollbar-hide">
           <Link
             to="/admin"
             className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all font-medium"
@@ -92,28 +92,30 @@ export default function AdminDashboard() {
           </Link>
         </nav>
 
-        <div className="p-4 border-t border-gray-100">
-          <a
-            href={`/${user.slug}`}
-            target="_blank"
-            className="flex items-center gap-3 px-4 py-3 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all font-medium mb-2"
-          >
-            <ExternalLink className="w-5 h-5" />
-            Ver meu Cartão
-          </a>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-all font-medium"
-          >
-            <LogOut className="w-5 h-5" />
-            Sair
-          </button>
-        </div>
-        
-        {/* Fixed Branding */}
-        <div className="p-6 mt-auto border-t border-gray-50 flex flex-col items-center justify-center">
-          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">Plataforma</span>
-          <span className="text-sm font-black text-blue-900 tracking-tighter">SMART CARTÃO</span>
+        <div className="shrink-0">
+          <div className="p-4 border-t border-gray-100">
+            <a
+              href={`/${user.slug}`}
+              target="_blank"
+              className="flex items-center gap-3 px-4 py-3 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all font-medium mb-2"
+            >
+              <ExternalLink className="w-5 h-5" />
+              Ver meu Cartão
+            </a>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-all font-medium"
+            >
+              <LogOut className="w-5 h-5" />
+              Sair
+            </button>
+          </div>
+          
+          {/* Fixed Branding */}
+          <div className="p-6 border-t border-gray-50 flex flex-col items-center justify-center bg-gray-50/50">
+            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">Plataforma</span>
+            <span className="text-sm font-black text-blue-900 tracking-tighter">SMART CARTÃO</span>
+          </div>
         </div>
       </aside>
 
