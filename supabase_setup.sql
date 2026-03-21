@@ -41,11 +41,15 @@ CREATE TABLE system_settings (
   default_phone TEXT,
   footer_logo TEXT,
   favicon TEXT,
+  footer_text TEXT,
+  system_version TEXT DEFAULT 'V2.0.4',
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT (now()) NOT NULL
 );
 
 -- 4. Initial default row
-INSERT INTO system_settings (id, default_logo, default_phone, footer_logo, favicon) VALUES (1, null, null, null, null) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_settings (id, default_logo, default_phone, footer_logo, favicon, footer_text) 
+VALUES (1, null, null, null, null, '© 2026 Smart Cartão - Todos os direitos reservados.') 
+ON CONFLICT (id) DO NOTHING;
 
 -- 5. Set up Row Level Security (RLS)
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;

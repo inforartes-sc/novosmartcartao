@@ -7,14 +7,19 @@ export default function Home() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [data, setData] = useState<any>(null);
+  const [settings, setSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!slug) return;
-    fetch(`/api/profile/${slug}`)
-      .then(res => res.json())
-      .then(setData)
-      .finally(() => setLoading(false));
+    Promise.all([
+      fetch(`/api/profile/${slug}`).then(res => res.json()),
+      fetch('/api/settings').then(res => res.json())
+    ]).then(([profileData, settingsData]) => {
+      setData(profileData);
+      setSettings(settingsData);
+    })
+    .finally(() => setLoading(false));
   }, [slug]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
@@ -194,18 +199,27 @@ export default function Home() {
         </motion.div>
 
         {/* Footer Credits */}
-        {user.footer_text && (
-          <motion.footer
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
-            className="w-full py-8 mt-4 border-t border-gray-100"
-          >
-            <p className="text-gray-400 text-[10px] leading-relaxed whitespace-pre-wrap">
-              {user.footer_text}
+        <motion.footer
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="w-full py-10 mt-4 border-t border-gray-100 italic bg-gray-50/50"
+        >
+          <div className="max-w-xl mx-auto space-y-2 text-center">
+            <p className="text-gray-400 text-[10px] leading-relaxed">
+              {settings?.footer_text && <span className="mr-1">{settings.footer_text} | </span>}
+              Desenvolvido por: <span className="font-bold text-gray-700">Smart Cartão</span>
             </p>
-          </motion.footer>
-        )}
+            <a
+              href={`https://wa.me/${settings?.default_phone || '5548935001794'}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 text-xs font-bold hover:underline block"
+            >
+              Clique Aqui e faça o seu também!
+            </a>
+          </div>
+        </motion.footer>
       </main>
     </div>
   );

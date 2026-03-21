@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
@@ -101,9 +102,25 @@ const authenticateMaster = async (req: any, res: any, next: any) => {
   });
 
 async function setupApp() {
+  // Vite server initialization (Must be at the TOP level of setupApp)
+  const isVercel = !!process.env.VERCEL;
+  let vite: any;
+  if (process.env.NODE_ENV !== 'production' && !isVercel) {
+    try {
+      const { createServer: createViteServer } = await import('vite');
+      vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      });
+      console.log('✅ Vite server instance created for dev mode');
+    } catch (e) {
+      console.warn('❌ Vite dev server failed to start', e);
+    }
+  }
+
   // Public settings
   app.get('/api/settings', async (req, res) => {
-    const { data, error } = await supabase.from('system_settings').select('default_logo, default_phone, footer_logo, favicon').eq('id', 1).single();
+    const { data, error } = await supabase.from('system_settings').select('*').eq('id', 1).single();
     if (error) return res.status(400).json({ error: error.message });
     res.json(data);
   });
@@ -346,8 +363,8 @@ async function setupApp() {
   });
 
   app.put('/api/admin/settings', authenticateMaster, async (req, res) => {
-    const { default_logo, default_phone, footer_logo, favicon } = req.body;
-    const { error } = await supabase.from('system_settings').update({ default_logo, default_phone, footer_logo, favicon }).eq('id', 1);
+    const { default_logo, default_phone, footer_logo, favicon, footer_text, system_version } = req.body;
+    const { error } = await supabase.from('system_settings').update({ default_logo, default_phone, footer_logo, favicon, footer_text, system_version }).eq('id', 1);
     if (error) return res.status(400).json({ error: error.message });
     res.json({ success: true });
   });
@@ -512,21 +529,71 @@ async function setupApp() {
     res.json({ success: true });
   });
 
-  // Vite middleware for development
-  const isVercel = !!process.env.VERCEL;
-  if (process.env.NODE_ENV !== 'production' && !isVercel) {
-    try {
-      const { createServer: createViteServer } = await import('vite');
-      const vite = await createViteServer({
-        server: { middlewareMode: true },
-        appType: 'spa',
-      });
-      app.use(vite.middlewares);
-    } catch (e) {
-      console.warn('Vite dev server failed to start');
+  // Dynamic OG Tags for profiles (Must be AFTER API routes but BEFORE Vite/Prod fallbacks)
+  app.get('/:slug', async (req, res, next) => {
+    const { slug } = req.params;
+    
+    // Reserved keywords that shouldn't match a profile slug (system paths)
+    const reserved = [
+      'login', 'register', 'admin', 'dashboard', 'api', 
+      'assets', 'vite', '@vite', '@react-refresh', 'node_modules',
+      'favicon.ico', 'robots.txt'
+    ];
+    
+    // Ignore internal files, paths with dots, starting with @, or reserved keywords
+    if (reserved.includes(slug.toLowerCase()) || slug.includes('.') || slug.startsWith('@')) {
+      return next();
     }
-  } else if (!isVercel) {
-    // Only serve static files if NOT on Vercel (Vercel handles this via vercel.json)
+    
+    try {
+      console.log(`🔍 [SLUG-ROUTE] Serving metadata for: ${slug}`);
+      // Use ilike for case-insensitive slug match
+      const { data: profile } = await supabase.from('profiles').select('*').ilike('slug', slug).single();
+      
+      const indexPath = path.join(process.cwd(), 'index.html');
+      if (!fs.existsSync(indexPath)) return next();
+      
+      let html = fs.readFileSync(indexPath, 'utf-8');
+
+      // Crucial: Injetar o Preamble do Vite usando path base '/' para garantir funcionamento local
+      if (vite) {
+         console.log('⚡ Injecting Vite Preamble into the static HTML');
+         html = await vite.transformIndexHtml('/', html);
+         console.log('🔍 Preamble injection check:', html.includes('__vite_plugin_react_preamble') || html.includes('@vite/client'));
+      }
+      
+      if (profile) {
+        console.log(`✅ Profile found: ${profile.username}`);
+        const title = `${profile.display_name} - Smart Cartão`;
+        const description = profile.role_title || 'Meu Cartão Digital';
+        const image = profile.profile_image || profile.banner_image || 'https://smartcartao.com/og-default.png';
+        
+        html = html.replace('{{title}}', title)
+                   .replace('{{description}}', description)
+                   .replace('{{image}}', image);
+      } else {
+        console.log(`🤷 Profile not found for slug: ${slug}, using fallback`);
+        html = html.replace('{{title}}', 'Smart Cartão')
+                   .replace('{{description}}', 'Crie seu cartão digital agora')
+                   .replace('{{image}}', 'https://smartcartao.com/og-default.png');
+      }
+      
+      res.setHeader('Content-Type', 'text/html');
+      return res.status(200).send(html);
+    } catch (err) {
+      console.error("❌ Error serving dynamic tags for slug:", slug, err);
+      next();
+    }
+  });
+
+  // AFTER Slug route, add Vite middleware (Dev fallback for system pages like /login, /dashboard)
+  if (vite) {
+    app.use(vite.middlewares);
+    console.log('✅ Vite middleware integrated as fallback for system routes');
+  }
+
+  // static file serving is done in production mode only
+  if (!isVercel && process.env.NODE_ENV === 'production') {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {

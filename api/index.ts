@@ -18,14 +18,32 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
+// Public settings (Publicly accessible)
+app.get('/api/settings', async (req, res) => {
+  const { data, error } = await supabase.from('system_settings').select('*').eq('id', 1).single();
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data);
+});
+
 // Dynamic OG Tags for profiles
 app.get('/:slug', async (req, res, next) => {
   const { slug } = req.params;
-  const reserved = ['login', 'register', 'admin', 'dashboard', 'api', 'assets', 'vite'];
-  if (reserved.includes(slug) || slug.includes('.')) return next();
+  
+  // Reserved keywords that shouldn't match a profile slug (system paths)
+  const reserved = [
+    'login', 'register', 'admin', 'dashboard', 'api', 
+    'assets', 'vite', '@vite', '@react-refresh', 'node_modules',
+    'favicon.ico', 'robots.txt'
+  ];
+  
+  // Ignore internal files, paths with dots, starting with @, or reserved keywords
+  if (reserved.includes(slug.toLowerCase()) || slug.includes('.') || slug.startsWith('@')) {
+    return next();
+  }
   
   try {
-    const { data: profile } = await supabase.from('profiles').select('*').eq('slug', slug).single();
+    // Use ilike for case-insensitive slug match in production
+    const { data: profile } = await supabase.from('profiles').select('*').ilike('slug', slug).single();
     
     // Read index.html from project root
     const indexPath = path.join(process.cwd(), 'index.html');
@@ -36,7 +54,7 @@ app.get('/:slug', async (req, res, next) => {
     if (profile) {
       const title = `${profile.display_name} - Smart Cartão`;
       const description = profile.role_title || 'Meu Cartão Digital';
-      const image = profile.profile_image || 'https://smartcartao.com/og-default.png';
+      const image = profile.profile_image || profile.banner_image || 'https://smartcartao.com/og-default.png';
       
       html = html.replace('{{title}}', title)
                  .replace('{{description}}', description)

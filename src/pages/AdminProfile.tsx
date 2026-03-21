@@ -297,15 +297,6 @@ export default function AdminProfile({ user, onUpdate }: AdminProfileProps) {
             </div>
             <p className="text-[11px] text-gray-400 mt-2 italic px-1">Esta imagem substitui o veículo padrão que aparece no final do seu cartão digital.</p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Texto do Rodapé (Créditos/Info)</label>
-            <textarea
-              value={formData.footer_text || ''}
-              onChange={(e) => setFormData({ ...formData, footer_text: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-20 resize-none text-sm"
-              placeholder="Ex: © 2025 SmartCartão - Todos os direitos reservados."
-            />
-          </div>
           <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 space-y-4">
             <div className="flex items-center justify-between">
               <label className="text-sm font-bold text-blue-900 uppercase tracking-tight">Letreiro Informativo</label>

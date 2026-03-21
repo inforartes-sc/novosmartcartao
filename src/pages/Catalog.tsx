@@ -46,15 +46,20 @@ export default function Catalog() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [data, setData] = useState<any>(null);
+  const [settings, setSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeModalProductId, setActiveModalProductId] = useState<string | number | null>(null);
 
   useEffect(() => {
     if (!slug) return;
-    fetch(`/api/profile/${slug}`)
-      .then(res => res.json())
-      .then(setData)
-      .finally(() => setLoading(false));
+    Promise.all([
+      fetch(`/api/profile/${slug}`).then(res => res.json()),
+      fetch('/api/settings').then(res => res.json())
+    ]).then(([profileData, settingsData]) => {
+      setData(profileData);
+      setSettings(settingsData);
+    })
+    .finally(() => setLoading(false));
   }, [slug]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
@@ -272,17 +277,21 @@ export default function Catalog() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-50 py-10 text-center px-6 border-t border-gray-100">
-        <p className="text-gray-500 text-xs mb-2">
-          Catálogo Digital Desenvolvido por: <span className="font-bold text-gray-900">Smart Cartão</span>
-        </p>
-        <a
-          href="https://wa.me/5548935001794"
-          target="_blank"
-          className="text-blue-600 text-sm font-bold hover:underline"
-        >
-          Clique Aqui e faça o seu também!
-        </a>
+      <footer className="bg-gray-50/50 py-10 text-center px-6 border-t border-gray-100 italic">
+        <div className="max-w-xl mx-auto space-y-2">
+          <p className="text-gray-400 text-[10px] leading-relaxed">
+            {settings?.footer_text && <span className="mr-1">{settings.footer_text} | </span>}
+            Catálogo Digital Desenvolvido por: <span className="font-bold text-gray-700">Smart Cartão</span>
+          </p>
+          <a
+            href={`https://wa.me/${settings?.default_phone || '5548935001794'}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 text-xs font-bold hover:underline block"
+          >
+            Clique Aqui e faça o seu também!
+          </a>
+        </div>
       </footer>
     </div>
   );

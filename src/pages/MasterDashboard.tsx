@@ -18,7 +18,11 @@ export default function MasterDashboard() {
   const [dataLoading, setDataLoading] = useState(true);
   const [globalSettings, setGlobalSettings] = useState({
     default_logo: '',
-    default_phone: ''
+    default_phone: '',
+    footer_logo: '',
+    favicon: '',
+    footer_text: '',
+    system_version: ''
   });
   const [savingSettings, setSavingSettings] = useState(false);
 
@@ -37,7 +41,8 @@ export default function MasterDashboard() {
         setUsers(await usersRes.json());
         setStats(await statsRes.json());
         if (settingsRes.ok) {
-          setGlobalSettings(await settingsRes.json());
+          const s = await settingsRes.json();
+          setGlobalSettings(prev => ({ ...prev, ...s }));
         }
       } else {
         toast.error('Erro ao carregar dados do Master Admin');

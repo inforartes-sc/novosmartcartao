@@ -239,12 +239,50 @@ export default function MasterSettings({ globalSettings, setGlobalSettings, hand
               <input
                 type="text"
                 placeholder="Ex: 5592984488888"
-                value={globalSettings.default_phone}
+                value={globalSettings.default_phone || ''}
                 onChange={(e) => setGlobalSettings({ ...globalSettings, default_phone: e.target.value })}
                 className="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-medium border-l-4 border-l-emerald-100"
               />
               <p className="text-[10px] text-gray-400 italic pl-1">Número inicial para novos consultores.</p>
             </div>
+          </div>
+
+          <hr className="border-gray-50" />
+
+          {/* Global Footer Text Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+                <Globe className="w-3 h-3 text-blue-500" />
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                Texto do Rodapé Global (Copyright/Créditos)
+                </label>
+            </div>
+            <textarea
+                value={globalSettings.footer_text || ''}
+                onChange={(e) => setGlobalSettings({ ...globalSettings, footer_text: e.target.value })}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-xs outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium min-h-[80px] resize-none"
+                placeholder="Ex: © 2026 Smart Cartão - Todos os direitos reservados."
+            />
+            <p className="text-[10px] text-gray-400 italic pl-1">Este texto aparecerá no final de todos os cartões e catálogos.</p>
+          </div>
+
+          <hr className="border-gray-50" />
+
+          {/* System Version Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+                <Settings className="w-3 h-3 text-slate-500" />
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                Versão do Sistema
+                </label>
+            </div>
+            <input
+                type="text"
+                value={globalSettings.system_version || ''}
+                onChange={(e) => setGlobalSettings({ ...globalSettings, system_version: e.target.value })}
+                className="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-slate-500 transition-all font-mono"
+                placeholder="Ex: V2.0.4"
+            />
           </div>
 
           <div className="flex justify-start pt-4">
