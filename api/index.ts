@@ -21,7 +21,7 @@ app.use(cookieParser());
 // Dynamic OG Tags for profiles
 app.get('/:slug', async (req, res, next) => {
   const { slug } = req.params;
-  const reserved = ['login', 'register', 'admin', 'api', 'assets', 'vite'];
+  const reserved = ['login', 'register', 'admin', 'dashboard', 'api', 'assets', 'vite'];
   if (reserved.includes(slug) || slug.includes('.')) return next();
   
   try {

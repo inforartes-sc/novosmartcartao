@@ -13,15 +13,20 @@ export const supabase = createClient(
 );
 
 export async function uploadImage(file: File, bucket: string = 'images') {
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${Math.random()}.${fileExt}`;
+  const fileExt = file.name.split('.').pop() || 'jpg';
+  const fileName = `upload-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`;
   const filePath = `${fileName}`;
 
   const { data, error } = await supabase.storage
     .from(bucket)
-    .upload(filePath, file);
+    .upload(filePath, file, {
+      upsert: true
+    });
 
-  if (error) throw error;
+  if (error) {
+    console.error('Supabase Storage Error:', error);
+    throw error;
+  }
 
   const { data: { publicUrl } } = supabase.storage
     .from(bucket)

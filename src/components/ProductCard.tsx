@@ -32,7 +32,7 @@ export default function ProductCard({
 
   const handleWhatsApp = () => {
     const phone = whatsappNumber || '5597984094999';
-    const message = `Olá! Vim pelo seu Cartão Digital. Tenho interesse na ${product.name}. Pode falar mais sobre ela?`;
+    const message = `Olá! Vim pelo seu Cartão Digital. Tenho interesse no veículo ${product.name}. Pode falar mais sobre ele?`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
@@ -105,7 +105,7 @@ export default function ProductCard({
             className="w-full py-2 px-4 text-white rounded-md transition-all text-xs font-bold uppercase hover:brightness-110"
             style={{ backgroundColor: themeColor }}
           >
-            Sobre a moto
+            Sobre o veículo
           </button>
           
           {product.has_consortium !== false && (
@@ -147,7 +147,7 @@ export default function ProductCard({
       <Modal
         isOpen={activeModal === 'about'}
         onClose={handleModalClose}
-        title={`Sobre a ${product.name}`}
+        title={`Sobre o Veículo: ${product.name}`}
       >
         <div className="space-y-6">
           {product.threeSixtyImages ? (

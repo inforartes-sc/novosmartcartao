@@ -7,6 +7,7 @@ interface User {
   slug: string;
   role_title?: string;
   profile_image?: string;
+  is_admin?: boolean;
 }
 
 interface AuthContextType {

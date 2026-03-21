@@ -1,0 +1,180 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, Routes, Route, useLocation } from 'react-router-dom';
+import { LogOut, LayoutDashboard, ShieldAlert, Users, Settings, Rocket } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { SYSTEM_VERSION } from '../config';
+import MasterOverview from './master/MasterOverview';
+import MasterUsers from './master/MasterUsers';
+import MasterSettings from './master/MasterSettings';
+import MasterPlans from './master/MasterPlans';
+import toast from 'react-hot-toast';
+
+export default function MasterDashboard() {
+  const { user, loading, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [users, setUsers] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [globalSettings, setGlobalSettings] = useState({
+    default_logo: '',
+    default_phone: ''
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
+
+  const isActive = (path: string) => location.pathname === path;
+
+  const fetchData = async () => {
+    try {
+      setDataLoading(true);
+      const [usersRes, statsRes, settingsRes] = await Promise.all([
+        fetch('/api/admin/users'),
+        fetch('/api/admin/stats'),
+        fetch('/api/admin/settings')
+      ]);
+
+      if (usersRes.ok && statsRes.ok) {
+        setUsers(await usersRes.json());
+        setStats(await statsRes.json());
+        if (settingsRes.ok) {
+          setGlobalSettings(await settingsRes.json());
+        }
+      } else {
+        toast.error('Erro ao carregar dados do Master Admin');
+      }
+    } catch (err) {
+      toast.error('Erro de conexão');
+    } finally {
+      setDataLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user && user.is_admin) {
+      fetchData();
+    }
+  }, [user]);
+
+  const handleSaveSettings = async () => {
+    try {
+      setSavingSettings(true);
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(globalSettings)
+      });
+      if (res.ok) {
+        toast.success('Configurações salvas com sucesso!');
+      } else {
+        toast.error('Erro ao salvar configurações');
+      }
+    } catch (err) {
+      toast.error('Erro de conexão');
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center font-black text-blue-600 animate-pulse">CARREGANDO SISTEMA...</div>;
+  if (!user || !user.is_admin) {
+    navigate('/login');
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
+      <aside className="w-64 bg-[#0f172a] text-white flex flex-col h-screen sticky top-0 shadow-xl z-50 transition-all">
+        <div className="p-6 border-b border-slate-700 font-heading shrink-0 text-center">
+          <div className="w-12 h-12 bg-blue-600 rounded-2xl mx-auto mb-3 flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <ShieldAlert className="w-6 h-6 text-white" />
+          </div>
+          <h2 className="text-lg font-black tracking-tight uppercase">
+            Master Panel
+          </h2>
+          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Smart Cartão {SYSTEM_VERSION}</p>
+        </div>
+        
+        <nav className="flex-grow p-4 space-y-2 overflow-y-auto scrollbar-hide">
+          <Link
+            to="/admin"
+            className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
+              isActive('/admin') ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
+            }`}
+          >
+            <LayoutDashboard className="w-5 h-5" />
+            <span className="font-bold text-sm">Visão Geral</span>
+          </Link>
+          <Link
+            to="/admin/users"
+            className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
+              isActive('/admin/users') ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
+            }`}
+          >
+            <Users className="w-5 h-5" />
+            <span className="font-bold text-sm">Usuários</span>
+          </Link>
+          <Link
+            to="/admin/plans"
+            className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
+              isActive('/admin/plans') ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
+            }`}
+          >
+            <Rocket className="w-5 h-5" />
+            <span className="font-bold text-sm">Planos</span>
+          </Link>
+          <Link
+            to="/admin/settings"
+            className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
+              isActive('/admin/settings') ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
+            }`}
+          >
+            <Settings className="w-5 h-5" />
+            <span className="font-bold text-sm">Configurações</span>
+          </Link>
+        </nav>
+
+        <div className="shrink-0 p-4 border-t border-slate-700 bg-slate-900/50">
+            <div className="p-4 bg-slate-800/30 border border-slate-700/50 rounded-2xl mb-4">
+                <p className="text-[8px] uppercase font-black text-slate-500 mb-1 pl-1 tracking-widest">Sessão</p>
+                <p className="font-black text-white text-xs truncate">{user.username}</p>
+            </div>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 text-red-400 hover:bg-red-500 hover:text-white rounded-xl transition-all font-black uppercase text-[10px] tracking-widest border border-red-400/20 hover:border-transparent"
+          >
+            <LogOut className="w-4 h-4" />
+            Sair do Master
+          </button>
+        </div>
+        
+        <div className="p-6 border-t border-slate-700 flex flex-col items-center justify-center bg-slate-900">
+          <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.3em] mb-1">Tecnologia</span>
+          <span className="text-xs font-black text-white tracking-tighter">SMART CARTÃO</span>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-grow p-8 overflow-y-auto">
+        {dataLoading ? (
+            <div className="h-full flex flex-col items-center justify-center text-blue-600 font-black animate-pulse uppercase tracking-[0.2em] space-y-4">
+                <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-xs">Sincronizando</span>
+            </div>
+        ) : (
+            <Routes>
+                <Route path="/" element={<MasterOverview stats={stats} />} />
+                <Route path="/users" element={<MasterUsers users={users} fetchUsers={fetchData} />} />
+                <Route path="/plans" element={<MasterPlans />} />
+                <Route path="/settings" element={<MasterSettings globalSettings={globalSettings} setGlobalSettings={setGlobalSettings} handleSaveSettings={handleSaveSettings} savingSettings={savingSettings} />} />
+            </Routes>
+        )}
+      </main>
+    </div>
+  );
+}

@@ -24,8 +24,8 @@ export default function Home() {
   const socialLinks = typeof user.social_links === 'string' ? JSON.parse(user.social_links) : (user.social_links || []);
 
   const handleWhatsAppMain = () => {
-    const phone = user.whatsapp || '5597984094999';
-    window.open(`https://wa.me/${phone}?text=Olá! Vim através do seu *Cartão Digital*. Gostaria de tirar algumas dúvidas.`, '_blank');
+    const message = encodeURIComponent(`Olá ${user.display_name}! Vim pelo seu Cartão Digital.`);
+    window.open(`https://wa.me/${user.whatsapp}?text=${message}`, '_blank');
   };
 
   const isDark = (color: string) => {
@@ -58,18 +58,9 @@ export default function Home() {
     <div 
       className="min-h-screen flex flex-col items-center transition-colors duration-500 relative"
       style={{ 
-        backgroundColor: user.background_color || '#ffffff',
-        backgroundImage: user.card_background_image ? `url(${user.card_background_image})` : 'none',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
-        backgroundRepeat: 'no-repeat'
+        backgroundColor: user.background_color || '#ffffff'
       }}
     >
-      {/* Background Overlay for readability if image exists */}
-      {user.card_background_image && (
-        <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-0" style={{ backgroundColor: `${user.background_color}99` || 'rgba(255,255,255,0.6)' }} />
-      )}
       {/* Top Banner with Integrated Marquee */}
       <div 
         className="w-full h-16 transition-colors duration-500 relative flex items-center overflow-hidden sticky top-0 z-50 shadow-lg" 
@@ -100,7 +91,7 @@ export default function Home() {
           className="relative w-48 h-48 mb-6"
         >
           <img
-            src={user.profile_image || "https://omeucartao.com.br/wp-content/uploads/2024/11/Rose-256x300.png"}
+            src={user.profile_image}
             alt={user.display_name}
             className="w-full h-full object-cover rounded-full border-4 border-white shadow-[0_10px_30px_rgba(0,0,0,0.1)]"
             referrerPolicy="no-referrer"

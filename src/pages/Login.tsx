@@ -27,7 +27,11 @@ export default function Login() {
         const data = JSON.parse(text);
         if (res.ok) {
           login(data.user);
-          navigate('/admin');
+          if (data.user.is_admin) {
+            navigate('/admin');
+          } else {
+            navigate('/dashboard');
+          }
         } else {
           setError(data.error || 'Erro ao fazer login');
         }
@@ -91,12 +95,6 @@ export default function Login() {
           </button>
         </form>
 
-        <p className="text-center mt-8 text-sm text-gray-500">
-          Não tem uma conta?{' '}
-          <button onClick={() => navigate('/register')} className="text-blue-600 font-bold hover:underline">
-            Cadastre-se
-          </button>
-        </p>
       </motion.div>
     </div>
   );

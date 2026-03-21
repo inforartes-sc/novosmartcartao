@@ -164,7 +164,7 @@ Renda: ${formData.renda}`;
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Modelo da Moto</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Modelo do Veículo</label>
         <select
           name="modelo"
           required
