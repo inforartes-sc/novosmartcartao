@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, Link, Routes, Route } from 'react-router-dom';
+import { useNavigate, Link, Routes, Route, useLocation } from 'react-router-dom';
 import { User, Package, LogOut, LayoutDashboard, ExternalLink, Palette, Copy, Share2, MousePointer2 } from 'lucide-react';
 import AdminProfile from './AdminProfile';
 import AdminProducts from './AdminProducts';
@@ -11,7 +11,10 @@ import toast from 'react-hot-toast';
 export default function AdminDashboard() {
   const { user, loading, logout, setUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [productCount, setProductCount] = useState(0);
+
+  const isActive = (path: string) => location.pathname === path;
 
   useEffect(() => {
     if (user) {
@@ -64,28 +67,36 @@ export default function AdminDashboard() {
         <nav className="flex-grow p-4 space-y-2 overflow-y-auto scrollbar-hide">
           <Link
             to="/admin"
-            className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all font-medium"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
+              isActive('/admin') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-blue-50/50 hover:text-blue-600'
+            }`}
           >
             <LayoutDashboard className="w-5 h-5" />
             Dashboard
           </Link>
           <Link
             to="/admin/perfil"
-            className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all font-medium"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
+              isActive('/admin/perfil') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-blue-50/50 hover:text-blue-600'
+            }`}
           >
             <User className="w-5 h-5" />
             Meu Perfil
           </Link>
           <Link
             to="/admin/produtos"
-            className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all font-medium"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
+              isActive('/admin/produtos') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-blue-50/50 hover:text-blue-600'
+            }`}
           >
             <Package className="w-5 h-5" />
             Produtos
           </Link>
           <Link
             to="/admin/tema"
-            className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all font-medium"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
+              isActive('/admin/tema') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-blue-50/50 hover:text-blue-600'
+            }`}
           >
             <Palette className="w-5 h-5" />
             Tema
