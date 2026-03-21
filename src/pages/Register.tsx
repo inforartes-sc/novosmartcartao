@@ -23,14 +23,19 @@ export default function Register() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-      const data = await res.json();
-      if (res.ok) {
-        navigate('/login');
-      } else {
-        setError(data.error || 'Erro ao criar conta');
+      const text = await res.text();
+      try {
+        const data = JSON.parse(text);
+        if (res.ok) {
+          navigate('/login');
+        } else {
+          setError(data.error || 'Erro ao criar conta');
+        }
+      } catch (e) {
+        setError(`Erro no Servidor (${res.status}): ${text.substring(0, 50)}...`);
       }
-    } catch (err) {
-      setError('Erro de conexão');
+    } catch (err: any) {
+      setError(`Erro de conexão: ${err.message}`);
     }
   };
 
