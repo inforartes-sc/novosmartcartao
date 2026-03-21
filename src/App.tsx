@@ -4,6 +4,7 @@
  */
 
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import Home from './pages/Home';
 import Catalog from './pages/Catalog';
 import Login from './pages/Login';
@@ -32,6 +33,7 @@ function Landing() {
 export default function App() {
   return (
     <Router>
+      <Toaster position="top-right" />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />

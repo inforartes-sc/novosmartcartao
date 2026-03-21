@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { uploadImage } from '../lib/supabase';
 import { motion } from 'motion/react';
 import { Plus, Trash2, Package, Camera, Loader2, Edit2, X, Check, Copy, Calculator } from 'lucide-react';
@@ -10,7 +11,6 @@ export default function AdminProducts() {
   const [submitting, setSubmitting] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [newColor, setNewColor] = useState('#000000');
   const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean; title: string; onConfirm: () => void } | null>(null);
   
@@ -53,12 +53,7 @@ export default function AdminProducts() {
 
   const [newPlan, setNewPlan] = useState({ installments: 0, value: '' });
 
-  useEffect(() => {
-    if (message) {
-      const timer = setTimeout(() => setMessage(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [message]);
+
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'image' | 'consortium_image' | 'liberacred_image') => {
     try {
@@ -67,7 +62,7 @@ export default function AdminProducts() {
       const url = await uploadImage(e.target.files[0]);
       setFormState(prev => ({ ...prev, [field]: url }));
     } catch (err) {
-      setMessage({ type: 'error', text: 'Erro ao enviar imagem' });
+      toast.error('Erro ao enviar imagem');
     } finally {
       setUploading(false);
     }
@@ -77,14 +72,14 @@ export default function AdminProducts() {
     try {
       if (!e.target.files || e.target.files.length === 0) return;
       if (formState.images.length >= 5) {
-        setMessage({ type: 'error', text: 'Máximo de 5 imagens na galeria' });
+        toast.error('Máximo de 5 imagens na galeria');
         return;
       }
       setUploading(true);
       const url = await uploadImage(e.target.files[0]);
       setFormState(prev => ({ ...prev, images: [...prev.images, url] }));
     } catch (err) {
-      setMessage({ type: 'error', text: 'Erro ao enviar imagem da galeria' });
+      toast.error('Erro ao enviar imagem da galeria');
     } finally {
       setUploading(false);
     }
@@ -129,15 +124,15 @@ export default function AdminProducts() {
       });
 
       if (res.ok) {
-        setMessage({ type: 'success', text: editingId ? 'Produto atualizado!' : 'Produto salvo!' });
+        toast.success(editingId ? 'Produto atualizado!' : 'Produto salvo!');
         closeForm();
         fetchProducts();
       } else {
         const errorData = await res.json();
-        setMessage({ type: 'error', text: errorData.error || 'Erro ao salvar produto' });
+        toast.error(errorData.error || 'Erro ao salvar produto');
       }
     } catch (err) {
-      setMessage({ type: 'error', text: 'Erro de conexão ao salvar' });
+      toast.error('Erro de conexão ao salvar');
     } finally {
       setSubmitting(false);
     }
@@ -306,11 +301,11 @@ export default function AdminProducts() {
         try {
           const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
           if (res.ok) {
-            setMessage({ type: 'success', text: 'Produto excluído' });
+            toast.success('Produto excluído');
             fetchProducts();
           }
         } catch (err) {
-          setMessage({ type: 'error', text: 'Erro ao excluir produto' });
+          toast.error('Erro ao excluir produto');
         }
         setConfirmConfig(null);
       }
@@ -340,14 +335,7 @@ export default function AdminProducts() {
         </button>
       </div>
 
-      {message && (
-        <div className={`fixed top-8 right-8 z-[60] p-4 rounded-2xl shadow-xl flex items-center gap-3 animate-in slide-in-from-right duration-300 ${
-          message.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
-        }`}>
-          {message.type === 'success' ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}
-          <span className="font-bold">{message.text}</span>
-        </div>
-      )}
+
 
       {showAddForm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">

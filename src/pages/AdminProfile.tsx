@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { Save, Camera, Plus, Trash2, Globe, Youtube, Instagram as InstaIcon, Facebook as FBIcon, Twitter, Music, Mail, Phone, Linkedin, Key, Eye, EyeOff } from 'lucide-react';
 import { uploadImage } from '../lib/supabase';
 
@@ -28,7 +29,6 @@ export default function AdminProfile({ user, onUpdate }: AdminProfileProps) {
   });
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState('');
   const [passwordForm, setPasswordForm] = useState({ password: '', confirm: '' });
   const [showPass, setShowPass] = useState(false);
   const [passLoading, setPassLoading] = useState(false);
@@ -57,9 +57,9 @@ export default function AdminProfile({ user, onUpdate }: AdminProfileProps) {
       const file = e.target.files[0];
       const url = await uploadImage(file);
       setFormData({ ...formData, [field]: url });
-      setMessage('Imagem enviada com sucesso!');
+      toast.success('Imagem enviada com sucesso!');
     } catch (err: any) {
-      setMessage(`Erro no upload: ${err.message}`);
+      toast.error(`Erro no upload: ${err.message}`);
     } finally {
       setUploading(false);
     }
@@ -68,7 +68,6 @@ export default function AdminProfile({ user, onUpdate }: AdminProfileProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setMessage('');
     try {
       const res = await fetch('/api/me', {
         method: 'PUT',
@@ -77,12 +76,12 @@ export default function AdminProfile({ user, onUpdate }: AdminProfileProps) {
       });
       if (res.ok) {
         onUpdate(formData);
-        setMessage('Perfil atualizado com sucesso!');
+        toast.success('Perfil atualizado com sucesso!');
       } else {
-        setMessage('Erro ao atualizar perfil.');
+        toast.error('Erro ao atualizar perfil.');
       }
     } catch (err) {
-      setMessage('Erro de conexão.');
+      toast.error('Erro de conexão.');
     } finally {
       setLoading(false);
     }
@@ -91,16 +90,15 @@ export default function AdminProfile({ user, onUpdate }: AdminProfileProps) {
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordForm.password !== passwordForm.confirm) {
-      setMessage('As senhas não coincidem!');
+      toast.error('As senhas não coincidem!');
       return;
     }
     if (passwordForm.password.length < 6) {
-      setMessage('A senha deve ter pelo menos 6 caracteres.');
+      toast.error('A senha deve ter pelo menos 6 caracteres.');
       return;
     }
     
     setPassLoading(true);
-    setMessage('');
     try {
       const res = await fetch('/api/auth/change-password', {
         method: 'POST',
@@ -108,19 +106,19 @@ export default function AdminProfile({ user, onUpdate }: AdminProfileProps) {
         body: JSON.stringify({ password: passwordForm.password }),
       });
       if (res.ok) {
-        setMessage('Senha alterada com sucesso!');
+        toast.success('Senha alterada com sucesso!');
         setPasswordForm({ password: '', confirm: '' });
       } else {
         const text = await res.text();
         try {
           const data = JSON.parse(text);
-          setMessage(`Erro: ${data.error || 'Não foi possível alterar a senha.'}`);
+          toast.error(`Erro: ${data.error || 'Não foi possível alterar a senha.'}`);
         } catch (e) {
-          setMessage(`Erro no Servidor (${res.status}): ${text.substring(0, 50)}...`);
+          toast.error(`Erro no Servidor (${res.status})`);
         }
       }
     } catch (err: any) {
-      setMessage(`Erro de conexão: ${err.message}`);
+      toast.error(`Erro de conexão: ${err.message}`);
     } finally {
       setPassLoading(false);
     }
@@ -129,12 +127,6 @@ export default function AdminProfile({ user, onUpdate }: AdminProfileProps) {
   return (
     <div className="max-w-2xl">
       <h1 className="text-3xl font-bold text-gray-900 mb-8">Editar Perfil</h1>
-
-      {message && (
-        <div className={`p-4 rounded-xl mb-6 text-sm font-medium ${message.includes('sucesso') ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
-          {message}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
         {/* Profile Image Upload */}

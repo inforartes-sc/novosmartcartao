@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { Save, Palette, RotateCcw } from 'lucide-react';
 
 interface AdminThemeProps {
@@ -13,12 +14,10 @@ export default function AdminTheme({ user, onUpdate }: AdminThemeProps) {
     background_color: user.background_color || '#ffffff'
   });
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setMessage('');
     try {
       const res = await fetch('/api/me', {
         method: 'PUT',
@@ -27,12 +26,12 @@ export default function AdminTheme({ user, onUpdate }: AdminThemeProps) {
       });
       if (res.ok) {
         onUpdate(formData);
-        setMessage('Tema atualizado com sucesso!');
+        toast.success('Tema atualizado com sucesso!');
       } else {
-        setMessage('Erro ao atualizar tema.');
+        toast.error('Erro ao atualizar tema.');
       }
     } catch (err) {
-      setMessage('Erro de conexão.');
+      toast.error('Erro de conexão.');
     } finally {
       setLoading(false);
     }
@@ -62,11 +61,7 @@ export default function AdminTheme({ user, onUpdate }: AdminThemeProps) {
         </button>
       </div>
 
-      {message && (
-        <div className={`p-4 rounded-xl mb-6 text-sm font-medium ${message.includes('sucesso') ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
-          {message}
-        </div>
-      )}
+
 
       <form onSubmit={handleSubmit} className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

@@ -6,6 +6,7 @@ import AdminProducts from './AdminProducts';
 import AdminTheme from './AdminTheme';
 import { useAuth } from '../contexts/AuthContext';
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 
 export default function AdminDashboard() {
   const { user, loading, logout, setUser } = useAuth();
@@ -29,7 +30,7 @@ export default function AdminDashboard() {
   const copyLink = () => {
     const url = `${window.location.origin}/${user?.slug}`;
     navigator.clipboard.writeText(url);
-    alert('Link copiado!');
+    toast.success('Link copiado com sucesso!');
   };
 
   const shareLink = async () => {
