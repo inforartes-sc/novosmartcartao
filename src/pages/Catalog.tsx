@@ -134,6 +134,19 @@ export default function Catalog() {
               </div>
             </div>
 
+            {/* Mobile: Novidades Slider (Below Profile, Above Highlights) */}
+            <div className="lg:hidden w-full mt-8">
+              <div className="relative w-full aspect-[4/3] rounded-[2rem] overflow-hidden shadow-lg border border-gray-100">
+                <div className="absolute top-4 left-4 z-10">
+                  <span className="bg-purple-600 text-white text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">Novidades</span>
+                </div>
+                <NovidadesSlider 
+                  products={products.filter((p: any) => p.is_new)} 
+                  onProductClick={(id) => setActiveModalProductId(id)}
+                />
+              </div>
+            </div>
+
             {/* Right: Novidades Slider (Desktop only) */}
             <div className="hidden lg:block w-full">
               <div className="relative w-full aspect-[16/9] rounded-[2.5rem] overflow-hidden group">
