@@ -24,52 +24,40 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE, {
   auth: { autoRefreshToken: false, persistSession: false }
 });
 
-async function createApp() {
-  const app = express();
-  const PORT = Number(process.env.PORT) || 3000;
+const app = express();
+const PORT = Number(process.env.PORT) || 3000;
 
-  app.use(express.json());
-  app.use(cookieParser());
+app.use(express.json());
+app.use(cookieParser());
 
-  // Auth Middleware
-  const authenticate = (req: any, res: any, next: any) => {
-    const token = req.cookies.token;
-    if (!token) return res.status(401).json({ error: 'Não autorizado' });
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      req.user = decoded;
-      next();
-    } catch (err) {
-      res.status(401).json({ error: 'Token inválido' });
-    }
-  };
+// Auth Middleware
+const authenticate = (req: any, res: any, next: any) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ error: 'Não autorizado' });
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    res.status(401).json({ error: 'Token inválido' });
+  }
+};
 
+async function setupApp() {
   // API Routes
   app.post('/api/auth/register', async (req, res) => {
     const { username, password, display_name, role_title, slug } = req.body;
     try {
-      // 1. Create User in Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: username.includes('@') ? username : `${username}@smartcartao.com`,
         password: password,
         email_confirm: true
       });
-
       if (authError) throw authError;
-
-      // 2. Create Profile in Profiles Table
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert({
-          id: authData.user.id,
-          username,
-          display_name,
-          role_title,
-          slug
-        });
-
+        .insert({ id: authData.user.id, username, display_name, role_title, slug });
       if (profileError) throw profileError;
-
       res.json({ id: authData.user.id });
     } catch (err: any) {
       res.status(400).json({ error: err.message });
@@ -80,20 +68,13 @@ async function createApp() {
     const { username, password } = req.body;
     try {
       const email = username.includes('@') ? username : `${username}@smartcartao.com`;
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-
-      // Get profile
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', data.user.id)
         .single();
-
       const token = jwt.sign({ id: data.user.id, email: data.user.email }, JWT_SECRET, { expiresIn: '7d' });
       res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'none' });
       res.json({ user: { id: data.user.id, username, slug: profile?.slug } });
@@ -108,12 +89,7 @@ async function createApp() {
   });
 
   app.get('/api/me', authenticate, async (req: any, res) => {
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', req.user.id)
-      .single();
-    
+    const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', req.user.id).single();
     if (error) return res.status(404).json({ error: 'Perfil não encontrado' });
     res.json(profile);
   });
@@ -124,7 +100,6 @@ async function createApp() {
       .from('profiles')
       .update({ display_name, role_title, profile_image, card_bottom_image, footer_text, primary_color, background_color, social_links, marquee_text, show_marquee, marquee_speed, whatsapp, instagram, facebook })
       .eq('id', req.user.id);
-    
     if (error) return res.status(400).json({ error: error.message });
     res.json({ success: true });
   });
@@ -132,9 +107,7 @@ async function createApp() {
   app.post('/api/auth/change-password', authenticate, async (req: any, res) => {
     const { password } = req.body;
     try {
-      const { error } = await supabase.auth.admin.updateUserById(req.user.id, {
-        password: password
-      });
+      const { error } = await supabase.auth.admin.updateUserById(req.user.id, { password });
       if (error) throw error;
       res.json({ success: true });
     } catch (err: any) {
@@ -274,21 +247,18 @@ async function createApp() {
     });
   }
 
-  return app;
-}
-
-// For Local server start
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-  createApp().then(app => {
-    const PORT = Number(process.env.PORT) || 3000;
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-    });
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on http://localhost:${PORT}`);
   });
 }
 
-// Export the factory for Vercel
-export default async (req: any, res: any) => {
-  const app = await createApp();
-  app(req, res);
-};
+// Start setup for local dev
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  setupApp();
+} else {
+  // Prod setup (mostly for Vercel)
+  setupApp();
+}
+
+// Export the app for Vercel
+export default app;
