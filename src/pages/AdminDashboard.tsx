@@ -1,18 +1,49 @@
 import React from 'react';
 import { useNavigate, Link, Routes, Route } from 'react-router-dom';
-import { User, Package, LogOut, LayoutDashboard, ExternalLink, Palette } from 'lucide-react';
+import { User, Package, LogOut, LayoutDashboard, ExternalLink, Palette, Copy, Share2, MousePointer2 } from 'lucide-react';
 import AdminProfile from './AdminProfile';
 import AdminProducts from './AdminProducts';
 import AdminTheme from './AdminTheme';
 import { useAuth } from '../contexts/AuthContext';
+import { useState, useEffect } from 'react';
 
 export default function AdminDashboard() {
   const { user, loading, logout, setUser } = useAuth();
   const navigate = useNavigate();
+  const [productCount, setProductCount] = useState(0);
+
+  useEffect(() => {
+    if (user) {
+      fetch('/api/products')
+        .then(res => res.json())
+        .then(data => setProductCount(data.length || 0))
+        .catch(() => {});
+    }
+  }, [user]);
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
+  };
+
+  const copyLink = () => {
+    const url = `${window.location.origin}/${user?.slug}`;
+    navigator.clipboard.writeText(url);
+    alert('Link copiado!');
+  };
+
+  const shareLink = async () => {
+    const url = `${window.location.origin}/${user?.slug}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Meu Smart Cartão',
+          url: url,
+        });
+      } catch (err) {}
+    } else {
+      copyLink();
+    }
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
@@ -83,19 +114,59 @@ export default function AdminDashboard() {
       <main className="flex-grow p-8 overflow-y-auto">
         <Routes>
           <Route path="/" element={
-            <div className="max-w-4xl">
-              <h1 className="text-3xl font-bold text-gray-900 mb-8">Bem-vindo, {user.display_name}!</h1>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                  <h3 className="text-lg font-bold mb-2">Status do Cartão</h3>
-                  <p className="text-gray-500 text-sm">Seu cartão está online e visível para todos.</p>
-                  <div className="mt-4 p-3 bg-blue-50 text-blue-700 rounded-xl text-xs font-mono break-all">
-                    {window.location.origin}/{user.slug}
-                  </div>
+            <div className="max-w-4xl space-y-6">
+              {/* Card link section */}
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-orange-500"><MousePointer2 className="w-4 h-4" /></span>
+                  <h3 className="font-bold text-gray-900">Seu Cartão Digital</h3>
                 </div>
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                  <h3 className="text-lg font-bold mb-2">Dica</h3>
-                  <p className="text-gray-500 text-sm">Personalize as cores do seu cartão no menu Tema!</p>
+                <p className="text-xs text-gray-400 mb-4">Compartilhe seu link personalizado com clientes</p>
+                
+                <div className="p-4 bg-gray-50 border border-gray-100 rounded-xl mb-4">
+                  <p className="text-xs text-gray-400 mb-1">URL do seu cartão</p>
+                  <p className="text-blue-600 font-bold break-all">{window.location.origin}/{user.slug}</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <button onClick={copyLink} className="flex items-center justify-center gap-2 py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all">
+                    <Copy className="w-4 h-4" /> Copiar Link
+                  </button>
+                  <button onClick={shareLink} className="flex items-center justify-center gap-2 py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all">
+                    <Share2 className="w-4 h-4" /> Compartilhar
+                  </button>
+                  <a href={`/${user.slug}`} target="_blank" className="flex items-center justify-center gap-2 py-3 px-4 bg-orange-500 text-white rounded-xl text-sm font-bold hover:bg-orange-600 transition-all shadow-lg shadow-orange-100">
+                    <ExternalLink className="w-4 h-4" /> Visualizar Cartão
+                  </a>
+                </div>
+              </div>
+
+              {/* Stats Card */}
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative group">
+                <Link to="/admin/produtos" className="absolute top-6 right-6 p-2 bg-blue-50 text-blue-600 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ExternalLink className="w-4 h-4" />
+                </Link>
+                <p className="text-xs text-gray-400 mb-2">Total de Itens Cadastrados</p>
+                <div className="text-4xl font-bold text-gray-900">{productCount}</div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-900"><LayoutDashboard className="w-5 h-5" /></span>
+                  <h3 className="font-bold text-xl text-gray-900">Ações Rápidas</h3>
+                </div>
+                <p className="text-xs text-gray-400 -mt-3 mb-4">Acesse as principais funcionalidades</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Link to="/admin/produtos" className="bg-white p-6 rounded-2xl border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all group flex flex-col items-center justify-center text-center">
+                    <Package className="w-8 h-8 text-gray-300 group-hover:text-blue-500 mb-3 transition-colors" />
+                    <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">Gerenciar Produtos</span>
+                  </Link>
+                  <Link to="/admin/perfil" className="bg-white p-6 rounded-2xl border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all group flex flex-col items-center justify-center text-center">
+                    <User className="w-8 h-8 text-gray-300 group-hover:text-blue-500 mb-3 transition-colors" />
+                    <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">Editar Perfil</span>
+                  </Link>
                 </div>
               </div>
             </div>
