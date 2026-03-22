@@ -103,8 +103,13 @@ export default function Home() {
           />
         </motion.div>
 
-        {/* Name and Role */}
+        {/* Name, Establishment and Role */}
         <h1 className={`text-4xl font-bold mb-1 font-heading ${textColor}`}>{user.display_name}</h1>
+        {user.establishment && (
+          <p className={`${subtitleColor} text-xl font-bold mb-1 uppercase tracking-tight`}>
+            {user.establishment}
+          </p>
+        )}
         <p className={`${subtitleColor} text-lg mb-10`}>{user.role_title}</p>
 
         {/* Action Buttons */}
@@ -211,7 +216,7 @@ export default function Home() {
               Desenvolvido por: <span className="font-bold text-gray-700">Smart Cartão</span>
             </p>
             <a
-              href={`https://wa.me/${settings?.default_phone || '5548935001794'}`}
+              href="/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 text-xs font-bold hover:underline block"

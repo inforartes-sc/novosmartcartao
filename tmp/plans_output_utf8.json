@@ -1,0 +1,36 @@
+﻿[dotenv@17.3.1] injecting env (6) from .env -- tip: ÔÜÖ´©Å  load multiple .env files with { path: ['.env.local', '.env'] }
+Plans in DB: [
+  {
+    "id": 1,
+    "name": "Standard",
+    "months": 1,
+    "created_at": "2026-03-21T15:40:43.832364+00:00",
+    "is_popular": false,
+    "billing_cycle": "monthly",
+    "description": "Plano Mensal - Ideal para testar o poder das vendas.",
+    "features": "Link Personalizado, Redes Sociais, QR Code ├Ünico, Suporte via Ticket, Cat├ílogo Completo",
+    "price": "49,00"
+  },
+  {
+    "id": 2,
+    "name": "Premium",
+    "months": 6,
+    "created_at": "2026-03-21T15:40:43.832364+00:00",
+    "is_popular": false,
+    "billing_cycle": "monthly",
+    "description": "",
+    "features": "",
+    "price": "0,00"
+  },
+  {
+    "id": 3,
+    "name": "Gold",
+    "months": 12,
+    "created_at": "2026-03-21T15:40:43.832364+00:00",
+    "is_popular": true,
+    "billing_cycle": "monthly",
+    "description": "Plano Anual - Domine o mercado pelo melhor valor.",
+    "features": "Tudo do Premium, 30% de Desconto, Dom├¡nio Pr├│prio, Sem Logo SmartCart├úo, Suporte VIP 24h",
+    "price": "399,00"
+  }
+]

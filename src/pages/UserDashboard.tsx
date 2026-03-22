@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, Link, Routes, Route, useLocation } from 'react-router-dom';
-import { User, Package, LogOut, LayoutDashboard, ExternalLink, Palette, Copy, Share2, MousePointer2, Bell, Calendar, AlertTriangle } from 'lucide-react';
+import { User, Package, LogOut, LayoutDashboard, ExternalLink, Palette, Copy, Share2, MousePointer2, Bell, Calendar, AlertTriangle, TrendingUp, Crown, CheckCircle, QrCode, Download, X } from 'lucide-react';
+import { QRCodeCanvas } from 'qrcode.react';
 import AdminProfile from './AdminProfile';
 import AdminProducts from './AdminProducts';
 import AdminTheme from './AdminTheme';
@@ -14,15 +15,34 @@ export default function UserDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const [productCount, setProductCount] = useState(0);
+  const [products, setProducts] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>(null);
+  const [showQR, setShowQR] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
+
+  const downloadQR = () => {
+    const canvas = document.getElementById('qr-gen') as HTMLCanvasElement;
+    if (canvas) {
+      const pngUrl = canvas.toDataURL('image/png').replace('image/png', 'image/octet-stream');
+      let downloadLink = document.createElement('a');
+      downloadLink.href = pngUrl;
+      downloadLink.download = `qrcode_${user?.slug}.png`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+      toast.success('QR Code baixado com sucesso!');
+    }
+  };
 
   useEffect(() => {
     if (user) {
       fetch('/api/products')
         .then(res => res.json())
-        .then(data => setProductCount(data.length || 0))
+        .then(data => {
+            setProductCount(data.length || 0);
+            setProducts(data || []);
+        })
         .catch(() => {});
       
       fetch('/api/settings')
@@ -184,8 +204,85 @@ export default function UserDashboard() {
         <Routes>
           <Route path="/" element={
             <div className="max-w-4xl space-y-6">
+              {/* Estatísticas do Catálogo */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-4">
+                
+                {/* Mais Acessados */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-full animate-in slide-in-from-bottom-4 duration-500 delay-100">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl shadow-sm shadow-blue-100">
+                        <TrendingUp className="w-5 h-5" />
+                      </div>
+                      <div>
+                         <h3 className="font-black text-gray-900 text-sm uppercase tracking-tight">Mais Acessados</h3>
+                         <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mt-0.5">Visitas aos Produtos</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex-1 space-y-3 mt-2">
+                    {products.length > 0 ? (
+                      [...products].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 3).map((p, i) => (
+                        <div key={p.id} className="flex items-center justify-between p-3 rounded-2xl hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all cursor-pointer">
+                          <div className="flex items-center gap-4 overflow-hidden">
+                            <div className="w-8 h-8 rounded-xl bg-gray-100 shrink-0 font-black flex items-center justify-center text-gray-400 text-xs">#{i+1}</div>
+                            <div className="truncate">
+                              <p className="font-bold text-sm text-gray-800 truncate">{p.title}</p>
+                              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{p.brand || 'Geral'}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0 bg-blue-50 text-blue-600 px-3 py-1.5 rounded-xl border border-blue-100/50">
+                            <MousePointer2 className="w-3 h-3" />
+                            <span className="font-black text-xs">{p.views || 0}</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest text-center py-8">Nenhum produto cadastrado.</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Mais Vendidos */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-full animate-in slide-in-from-bottom-4 duration-500 delay-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl shadow-sm shadow-emerald-100">
+                        <Crown className="w-5 h-5" />
+                      </div>
+                      <div>
+                         <h3 className="font-black text-gray-900 text-sm uppercase tracking-tight">Mais Vendidos</h3>
+                         <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mt-0.5">Top Produtos do Catálogo</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex-1 space-y-3 mt-2">
+                    {products.length > 0 ? (
+                      [...products].sort((a, b) => (b.sales || 0) - (a.sales || 0)).slice(0, 3).map((p, i) => (
+                        <div key={p.id} className="flex items-center justify-between p-3 rounded-2xl hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all cursor-pointer">
+                          <div className="flex items-center gap-4 overflow-hidden">
+                            <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 shrink-0 font-black flex items-center justify-center text-xs">#{i+1}</div>
+                            <div className="truncate">
+                              <p className="font-bold text-sm text-gray-800 truncate">{p.title}</p>
+                              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{p.brand || 'Geral'}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0 bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-xl border border-emerald-100/50">
+                            <CheckCircle className="w-3 h-3" />
+                            <span className="font-black text-xs">{p.sales || 0}</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest text-center py-8">Nenhum produto vendido.</p>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+
               {/* Card link section */}
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 animate-in slide-in-from-bottom-4 duration-500 delay-300">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-orange-500"><MousePointer2 className="w-4 h-4" /></span>
                   <h3 className="font-bold text-gray-900">Seu Cartão Digital</h3>
@@ -207,15 +304,18 @@ export default function UserDashboard() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
                   <button onClick={copyLink} className="flex items-center justify-center gap-2 py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all">
                     <Copy className="w-4 h-4" /> Copiar Link
                   </button>
                   <button onClick={shareLink} className="flex items-center justify-center gap-2 py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all">
                     <Share2 className="w-4 h-4" /> Compartilhar
                   </button>
+                  <button onClick={() => setShowQR(true)} className="flex items-center justify-center gap-2 py-3 px-4 bg-white border border-violet-100/50 rounded-xl text-sm font-medium text-violet-700 hover:bg-violet-50 transition-all">
+                    <QrCode className="w-4 h-4" /> Ver QR Code
+                  </button>
                   <a href={`/${user.slug}`} target="_blank" className="flex items-center justify-center gap-2 py-3 px-4 bg-orange-500 text-white rounded-xl text-sm font-bold hover:bg-orange-600 transition-all shadow-lg shadow-orange-100">
-                    <ExternalLink className="w-4 h-4" /> Visualizar Cartão
+                    <ExternalLink className="w-4 h-4" /> Visualizar
                   </a>
                 </div>
               </div>
@@ -250,6 +350,46 @@ export default function UserDashboard() {
           <Route path="/tema" element={<AdminTheme user={user} onUpdate={setUser} />} />
         </Routes>
       </main>
+
+      {/* QR Code Modal */}
+      {showQR && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-[2rem] p-8 w-full max-w-sm shadow-2xl relative flex flex-col items-center animate-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setShowQR(false)} 
+              className="absolute top-4 right-4 p-2 text-gray-400 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="w-12 h-12 bg-violet-100 text-violet-600 rounded-xl flex items-center justify-center mb-4">
+              <QrCode className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-1">Seu QR Code</h3>
+            <p className="text-sm text-gray-500 text-center mb-8">
+              Os clientes podem escanear este código com a câmera do celular para acessar seu cartão digital.
+            </p>
+            
+            <div className="bg-white border-2 border-dashed border-gray-200 rounded-[2rem] p-6 mb-8 flex justify-center">
+               <QRCodeCanvas 
+                 id="qr-gen"
+                 value={`${window.location.origin}/${user?.slug}`} 
+                 size={200} 
+                 bgColor={"#ffffff"}
+                 fgColor={"#000000"}
+                 level={"H"}
+               />
+            </div>
+
+            <button
+              onClick={downloadQR}
+              className="w-full flex items-center justify-center gap-2 py-4 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-colors shadow-lg shadow-gray-200"
+            >
+              <Download className="w-5 h-5" />
+              Baixar Código (Impresão)
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

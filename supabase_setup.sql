@@ -17,6 +17,7 @@ CREATE TABLE profiles (
   plan_type TEXT DEFAULT 'Standard',
   expiry_date DATE,
   status TEXT DEFAULT 'active',
+  establishment TEXT,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT (now()) NOT NULL
 );
 
@@ -69,3 +70,10 @@ CREATE POLICY "Settings viewable by everyone" ON system_settings FOR SELECT USIN
 CREATE POLICY "Only admins can edit settings" ON system_settings FOR ALL USING (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
 );
+
+-- Adicionar novas colunas para mockups da Landing Page
+ALTER TABLE system_settings ADD COLUMN IF NOT EXISTS landing_mockup_service TEXT;
+ALTER TABLE system_settings ADD COLUMN IF NOT EXISTS landing_mockup_features TEXT;
+ALTER TABLE system_settings ADD COLUMN IF NOT EXISTS landing_mockup_hero TEXT;
+
+ALTER TABLE system_settings ADD COLUMN IF NOT EXISTS landing_faqs TEXT;

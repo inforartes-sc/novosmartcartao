@@ -25,52 +25,7 @@ app.get('/api/settings', async (req, res) => {
   res.json(data);
 });
 
-// Dynamic OG Tags for profiles
-app.get('/:slug', async (req, res, next) => {
-  const { slug } = req.params;
-  
-  // Reserved keywords that shouldn't match a profile slug (system paths)
-  const reserved = [
-    'login', 'register', 'admin', 'dashboard', 'api', 
-    'assets', 'vite', '@vite', '@react-refresh', 'node_modules',
-    'favicon.ico', 'robots.txt'
-  ];
-  
-  // Ignore internal files, paths with dots, starting with @, or reserved keywords
-  if (reserved.includes(slug.toLowerCase()) || slug.includes('.') || slug.startsWith('@')) {
-    return next();
-  }
-  
-  try {
-    // Use ilike for case-insensitive slug match in production
-    const { data: profile } = await supabase.from('profiles').select('*').ilike('slug', slug).single();
-    
-    // Read index.html from project root
-    const indexPath = path.join(process.cwd(), 'index.html');
-    if (!fs.existsSync(indexPath)) return next();
-    
-    let html = fs.readFileSync(indexPath, 'utf-8');
-    
-    if (profile) {
-      const title = `${profile.display_name} - Smart Cartão`;
-      const description = profile.role_title || 'Meu Cartão Digital';
-      const image = profile.profile_image || profile.banner_image || 'https://smartcartao.com/og-default.png';
-      
-      html = html.replace('{{title}}', title)
-                 .replace('{{description}}', description)
-                 .replace('{{image}}', image);
-    } else {
-      html = html.replace('{{title}}', 'Smart Cartão')
-                 .replace('{{description}}', 'Crie seu cartão digital agora')
-                 .replace('{{image}}', 'https://smartcartao.com/og-default.png');
-    }
-    
-    res.setHeader('Content-Type', 'text/html');
-    return res.status(200).send(html);
-  } catch (err) {
-    next();
-  }
-});
+
 
 // Auth Middleware
 const authenticate = (req: any, res: any, next: any) => {
@@ -125,6 +80,21 @@ app.post('/api/auth/logout', (req, res) => {
   res.json({ success: true });
 });
 
+const authenticateMaster = (req: any, res: any, next: any) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ error: 'Não autorizado' });
+  try {
+    const decoded: any = jwt.verify(token, JWT_SECRET);
+    if (decoded.email !== 'master@smartcartao.com' && decoded.email !== 'adm@smartcartao.com') {
+      return res.status(403).json({ error: 'Acesso negado' });
+    }
+    req.user = decoded;
+    next();
+  } catch (err) {
+    res.status(401).json({ error: 'Token inválido' });
+  }
+};
+
 app.get('/api/me', authenticate, async (req: any, res) => {
   const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', req.user.id).single();
   if (error) return res.status(404).json({ error: 'Perfil não encontrado' });
@@ -170,23 +140,203 @@ app.get('/api/products', authenticate, async (req: any, res) => {
 });
 
 app.post('/api/products', authenticate, async (req: any, res) => {
-  const { user_id, ...data } = req.body;
-  const { data: result, error } = await supabase.from('products').insert({ ...data, user_id: req.user.id }).select('id').single();
+  const { name, image, description, colors, images, consortium_image, liberacred_image, has_liberacred, has_consortium, is_highlighted, is_new, year, price, mileage, brand, condition, fuel, transmission, color, optionals, show_consortium_plans, consortium_plans } = req.body;
+  const { data: result, error } = await supabase.from('products').insert({
+    user_id: req.user.id,
+    name,
+    image,
+    description,
+    colors: Array.isArray(colors) ? JSON.stringify(colors) : (colors || '["#000000"]'),
+    images: Array.isArray(images) ? JSON.stringify(images) : (images || '[]'),
+    consortium_image,
+    liberacred_image,
+    has_liberacred: !!has_liberacred,
+    has_consortium: has_consortium !== undefined ? !!has_consortium : true,
+    is_highlighted: !!is_highlighted,
+    is_new: !!is_new,
+    year: year || null,
+    price: price || null,
+    mileage: mileage || null,
+    brand,
+    condition,
+    fuel,
+    transmission,
+    color,
+    optionals: Array.isArray(optionals) ? JSON.stringify(optionals) : (optionals || '[]'),
+    show_consortium_plans: !!show_consortium_plans,
+    consortium_plans: Array.isArray(consortium_plans) ? JSON.stringify(consortium_plans) : (consortium_plans || '[]')
+  }).select('id').single();
+  
   if (error) return res.status(400).json({ error: error.message });
   res.json({ id: result.id });
 });
 
 app.put('/api/products/:id', authenticate, async (req: any, res) => {
-  const { user_id, ...data } = req.body;
-  const { error } = await supabase.from('products').update(data).eq('id', req.params.id).eq('user_id', req.user.id);
+  const { name, image, description, colors, images, consortium_image, liberacred_image, has_liberacred, has_consortium, is_highlighted, is_new, year, price, mileage, brand, condition, fuel, transmission, color, optionals, show_consortium_plans, consortium_plans } = req.body;
+  const { error } = await supabase.from('products').update({
+    name,
+    image,
+    description,
+    colors: Array.isArray(colors) ? JSON.stringify(colors) : (colors || '["#000000"]'),
+    images: Array.isArray(images) ? JSON.stringify(images) : (images || '[]'),
+    consortium_image,
+    liberacred_image,
+    has_liberacred: !!has_liberacred,
+    has_consortium: has_consortium !== undefined ? !!has_consortium : true,
+    is_highlighted: !!is_highlighted,
+    is_new: !!is_new,
+    year: year || null,
+    price: price || null,
+    mileage: mileage || null,
+    brand,
+    condition,
+    fuel,
+    transmission,
+    color,
+    optionals: Array.isArray(optionals) ? JSON.stringify(optionals) : (optionals || '[]'),
+    show_consortium_plans: !!show_consortium_plans,
+    consortium_plans: Array.isArray(consortium_plans) ? JSON.stringify(consortium_plans) : (consortium_plans || '[]')
+  }).eq('id', parseInt(req.params.id)).eq('user_id', req.user.id);
+  
   if (error) return res.status(400).json({ error: error.message });
   res.json({ success: true });
 });
 
 app.delete('/api/products/:id', authenticate, async (req: any, res) => {
-  const { error } = await supabase.from('products').delete().eq('id', req.params.id).eq('user_id', req.user.id);
+  const { error } = await supabase.from('products').delete().eq('id', parseInt(req.params.id)).eq('user_id', req.user.id);
   if (error) return res.status(400).json({ error: error.message });
   res.json({ success: true });
+});
+
+// Admin Settings
+app.get('/api/admin/settings', authenticateMaster, async (req, res) => {
+  const { data: settings, error } = await supabase.from('system_settings').select('*').eq('id', 1).single();
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(settings);
+});
+
+app.put('/api/admin/settings', authenticateMaster, async (req, res) => {
+  const { 
+    default_logo, default_phone, footer_logo, favicon, footer_text, system_version,
+    landing_concept_title, landing_concept_subtitle, landing_features_title,
+    landing_cta_title, landing_cta_subtitle, landing_cta_button,
+    landing_example1, landing_example2, landing_example3, landing_example4,
+    landing_concept_item1_t, landing_concept_item1_d,
+    landing_concept_item2_t, landing_concept_item2_d,
+    landing_concept_item3_t, landing_concept_item3_d
+  } = req.body;
+  
+  const { error } = await supabase.from('system_settings').update({ 
+    default_logo, default_phone, footer_logo, favicon, footer_text, system_version,
+    landing_concept_title, landing_concept_subtitle, landing_features_title,
+    landing_cta_title, landing_cta_subtitle, landing_cta_button,
+    landing_example1, landing_example2, landing_example3, landing_example4,
+    landing_concept_item1_t, landing_concept_item1_d,
+    landing_concept_item2_t, landing_concept_item2_d,
+    landing_concept_item3_t, landing_concept_item3_d
+  }).eq('id', 1);
+  
+  if (error) {
+    console.error('Settings Update Error:', error);
+    return res.status(400).json({ error: error.message });
+  }
+  res.json({ success: true });
+});
+
+// Admin Plans
+app.get('/api/admin/plans', authenticateMaster, async (req, res) => {
+  const { data: plans, error } = await supabase.from('plans').select('*').order('id', { ascending: true });
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(plans);
+});
+
+app.get('/api/admin/plans/public', async (req, res) => {
+  const { data: plans, error } = await supabase.from('plans').select('*').order('id', { ascending: true });
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(plans);
+});
+
+app.get('/api/public/plans', async (req, res) => {
+  const { data: plans, error } = await supabase.from('plans').select('*').order('id', { ascending: true });
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(plans);
+});
+
+app.post('/api/admin/plans', authenticateMaster, async (req, res) => {
+  const { name, months, price, description, features, billing_cycle, is_popular } = req.body;
+  const { data, error } = await supabase.from('plans').insert({ 
+    name, months, price, description, features, billing_cycle, is_popular 
+  }).select().single();
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data);
+});
+
+app.put('/api/admin/plans/:id', authenticateMaster, async (req: any, res) => {
+  const { name, months, price, description, features, billing_cycle, is_popular } = req.body;
+  const { error } = await supabase.from('plans').update({ 
+    name, months, price, description, features, billing_cycle,
+    is_popular: is_popular === true || is_popular === 1
+  }).eq('id', req.params.id);
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ success: true });
+});
+
+app.delete('/api/admin/plans/:id', authenticateMaster, async (req: any, res) => {
+  const { error } = await supabase.from('plans').delete().eq('id', req.params.id);
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ success: true });
+});
+
+app.get('/api/public/settings', async (req, res) => {
+  const { data: settings } = await supabase.from('system_settings').select('*').eq('id', 1).single();
+  res.json(settings || {});
+});
+
+// Dynamic OG Tags for profiles
+app.get('/:slug', async (req, res, next) => {
+  const { slug } = req.params;
+  
+  // Reserved keywords that shouldn't match a profile slug (system paths)
+  const reserved = [
+    'login', 'register', 'admin', 'dashboard', 'api', 
+    'assets', 'vite', '@vite', '@react-refresh', 'node_modules',
+    'favicon.ico', 'robots.txt'
+  ];
+  
+  // Ignore internal files, paths with dots, starting with @, or reserved keywords
+  if (reserved.includes(slug.toLowerCase()) || slug.includes('.') || slug.startsWith('@')) {
+    return next();
+  }
+  
+  try {
+    // Use ilike for case-insensitive slug match in production
+    const { data: profile } = await supabase.from('profiles').select('*').ilike('slug', slug).single();
+    
+    // Read index.html from project root
+    const indexPath = path.join(process.cwd(), 'index.html');
+    if (!fs.existsSync(indexPath)) return next();
+    
+    let html = fs.readFileSync(indexPath, 'utf-8');
+    
+    if (profile) {
+      const title = `${profile.display_name} - Smart Cartão`;
+      const description = profile.role_title || 'Meu Cartão Digital';
+      const image = profile.profile_image || profile.banner_image || 'https://smartcartao.com/og-default.png';
+      
+      html = html.replace('{{title}}', title)
+                 .replace('{{description}}', description)
+                 .replace('{{image}}', image);
+    } else {
+      html = html.replace('{{title}}', 'Smart Cartão')
+                 .replace('{{description}}', 'Crie seu cartão digital agora')
+                 .replace('{{image}}', 'https://smartcartao.com/og-default.png');
+    }
+    
+    res.setHeader('Content-Type', 'text/html');
+    return res.status(200).send(html);
+  } catch (err) {
+    next();
+  }
 });
 
 export default app;

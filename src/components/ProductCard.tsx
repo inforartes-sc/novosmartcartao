@@ -34,6 +34,15 @@ export default function ProductCard({
     const phone = whatsappNumber || '5597984094999';
     const message = `Olá! Vim pelo seu Cartão Digital. Tenho interesse no veículo ${product.name}. Pode falar mais sobre ele?`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+    
+    // Log the interaction as a 'sale' intent
+    fetch(`/api/products/${product.id}/sale`, { method: 'POST' }).catch(() => {});
+  };
+
+  const handleView = () => {
+    setActiveModal('about');
+    // Log the interaction as a 'view'
+    fetch(`/api/products/${product.id}/view`, { method: 'POST' }).catch(() => {});
   };
 
   useEffect(() => {
@@ -68,8 +77,8 @@ export default function ProductCard({
   };
 
   useEffect(() => {
-    if (activeModalProductId === product.id) {
-      setActiveModal('about');
+    if (activeModalProductId !== null && String(activeModalProductId) === String(product.id)) {
+      handleView();
     }
   }, [activeModalProductId, product.id]);
 
@@ -86,7 +95,10 @@ export default function ProductCard({
       className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden flex flex-col h-full hover:shadow-2xl hover:shadow-gray-300/40 transition-all duration-300"
     >
       <div className="p-4 flex flex-col items-center text-center flex-grow">
-        <div className="relative w-full aspect-[4/3] mb-4 group overflow-hidden rounded-xl">
+        <div 
+          className="relative w-full aspect-[4/3] mb-4 group overflow-hidden rounded-xl cursor-pointer"
+          onClick={handleView}
+        >
           <img
             src={product.image}
             alt={product.name}
@@ -101,7 +113,7 @@ export default function ProductCard({
         
         <div className="flex flex-col gap-2 w-full">
           <button
-            onClick={() => setActiveModal('about')}
+            onClick={handleView}
             className="w-full py-2 px-4 text-white rounded-md transition-all text-xs font-bold uppercase hover:brightness-110"
             style={{ backgroundColor: themeColor }}
           >

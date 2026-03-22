@@ -145,7 +145,7 @@ export default function AdminProfile({ user, onUpdate }: AdminProfileProps) {
           <p className="text-sm text-gray-500 mt-2">{uploading ? 'Enviando...' : 'Clique para alterar a foto'}</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nome de Exibição</label>
             <input
@@ -153,6 +153,16 @@ export default function AdminProfile({ user, onUpdate }: AdminProfileProps) {
               value={formData.display_name || ''}
               onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
               className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Estabelecimento</label>
+            <input
+              type="text"
+              value={formData.establishment || ''}
+              onChange={(e) => setFormData({ ...formData, establishment: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="Ex: Yamaha Motos"
             />
           </div>
           <div>

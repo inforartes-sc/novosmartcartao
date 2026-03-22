@@ -25,6 +25,7 @@ export default function MasterUsers({ users, fetchUsers }: Props) {
     plan_type: 'Standard',
     expiry_date: '',
     admin_message: '',
+    establishment: '',
     is_admin: false
   });
   const [passForm, setPassForm] = useState('');
@@ -38,6 +39,7 @@ export default function MasterUsers({ users, fetchUsers }: Props) {
     slug: '',
     plan_id: '',
     expiry_date: '',
+    establishment: '',
     is_admin: false
   });
 
@@ -92,7 +94,7 @@ export default function MasterUsers({ users, fetchUsers }: Props) {
       if (res.ok) {
         toast.success(`Usuário ${newUserData.username} criado com sucesso!`);
         setShowAddUser(false);
-        setNewUserData({ username: '', password: '', display_name: '', role_title: 'Consultor(a) Yamaha', slug: '', plan_id: '', expiry_date: '', is_admin: false });
+        setNewUserData({ username: '', password: '', display_name: '', establishment: '', role_title: 'Consultor(a) Yamaha', slug: '', plan_id: '', expiry_date: '', is_admin: false });
         fetchUsers();
       } else {
         const data = await res.json();
@@ -251,6 +253,16 @@ export default function MasterUsers({ users, fetchUsers }: Props) {
                 onChange={(e) => setNewUserData({ ...newUserData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
                 className="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                 placeholder="rose-farias"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest pl-1">Identificação / Empresa</label>
+              <input
+                type="text"
+                value={newUserData.establishment}
+                onChange={(e) => setNewUserData({ ...newUserData, establishment: e.target.value })}
+                className="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                placeholder="Ex: Yamaha Motos"
               />
             </div>
             <div className="space-y-1">
@@ -415,6 +427,7 @@ export default function MasterUsers({ users, fetchUsers }: Props) {
                             plan_type: u.plan_type || 'Standard',
                             expiry_date: u.expiry_date ? u.expiry_date.split('T')[0] : '',
                             admin_message: u.admin_message || '',
+                            establishment: u.establishment || '',
                             is_admin: u.is_admin === true
                           });
                         }}
@@ -479,6 +492,16 @@ export default function MasterUsers({ users, fetchUsers }: Props) {
                         placeholder="Nome de Exibição"
                         value={editForm.display_name}
                         onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
+                        className="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest pl-1">Identificação / Empresa</label>
+                      <input
+                        type="text"
+                        placeholder="Ex: Yamaha Motos"
+                        value={editForm.establishment}
+                        onChange={(e) => setEditForm({ ...editForm, establishment: e.target.value })}
                         className="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
                       />
                     </div>

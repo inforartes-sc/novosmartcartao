@@ -125,6 +125,12 @@ async function setupApp() {
     res.json(data);
   });
 
+  app.get('/api/plans-data', async (req, res) => {
+    const { data: plans, error } = await supabase.from('plans').select('*').order('id', { ascending: true });
+    if (error) return res.status(400).json({ error: error.message });
+    res.json(plans);
+  });
+
   // API Routes
   app.post('/api/auth/register', authenticateMaster, async (req, res) => {
     const { username, password, display_name, role_title, slug } = req.body;
@@ -231,10 +237,10 @@ async function setupApp() {
   });
 
   app.put('/api/me', authenticate, async (req: any, res) => {
-    const { display_name, role_title, profile_image, card_bottom_image, footer_text, primary_color, background_color, social_links, marquee_text, show_marquee, marquee_speed, whatsapp, instagram, facebook } = req.body;
+    const { display_name, establishment, role_title, profile_image, card_bottom_image, footer_text, primary_color, background_color, social_links, marquee_text, show_marquee, marquee_speed, whatsapp, instagram, facebook } = req.body;
     const { error } = await supabase
       .from('profiles')
-      .update({ display_name, role_title, profile_image, card_bottom_image, footer_text, primary_color, background_color, social_links, marquee_text, show_marquee, marquee_speed, whatsapp, instagram, facebook })
+      .update({ display_name, establishment, role_title, profile_image, card_bottom_image, footer_text, primary_color, background_color, social_links, marquee_text, show_marquee, marquee_speed, whatsapp, instagram, facebook })
       .eq('id', req.user.id);
     if (error) return res.status(400).json({ error: error.message });
     res.json({ success: true });
@@ -328,13 +334,14 @@ async function setupApp() {
 
   // Admin User General Update
   app.put('/api/admin/users/:id/update', authenticateMaster, async (req: any, res) => {
-    const { display_name, role_title, slug, status, plan_type, expiry_date, admin_message } = req.body;
+    const { display_name, establishment, role_title, slug, status, plan_type, expiry_date, admin_message } = req.body;
     
     try {
       const { error } = await supabase
         .from('profiles')
         .update({ 
           display_name,
+          establishment,
           role_title,
           slug,
           status,
@@ -363,8 +370,67 @@ async function setupApp() {
   });
 
   app.put('/api/admin/settings', authenticateMaster, async (req, res) => {
-    const { default_logo, default_phone, footer_logo, favicon, footer_text, system_version } = req.body;
-    const { error } = await supabase.from('system_settings').update({ default_logo, default_phone, footer_logo, favicon, footer_text, system_version }).eq('id', 1);
+    const { 
+      default_logo, default_phone, footer_logo, favicon, footer_text, system_version,
+      landing_hero_title, landing_hero_subtitle, landing_hero_cta,
+      landing_concept_title, landing_concept_subtitle, landing_features_title,
+      landing_cta_title, landing_cta_subtitle, landing_cta_button,
+      landing_example1, landing_example2, landing_example3, landing_example4,
+      landing_concept_item1_t, landing_concept_item1_d,
+      landing_concept_item2_t, landing_concept_item2_d,
+      landing_concept_item3_t, landing_concept_item3_d,
+      landing_mockup_hero, landing_mockup_service, landing_mockup_features,
+      landing_done_tag, landing_done_title_first, landing_done_title_last, landing_done_text,
+      landing_catalog_tag, landing_catalog_title_first, landing_catalog_title_last, landing_catalog_text,
+      landing_catalog_btn_text, landing_catalog_btn_link,
+      landing_stats_text, landing_stats_description,
+      landing_faqs
+    } = req.body;
+    
+    const { error } = await supabase.from('system_settings').update({ 
+      default_logo, default_phone, footer_logo, favicon, footer_text, system_version,
+      landing_hero_title, landing_hero_subtitle, landing_hero_cta,
+      landing_concept_title, landing_concept_subtitle, landing_features_title,
+      landing_cta_title, landing_cta_subtitle, landing_cta_button,
+      landing_example1, landing_example2, landing_example3, landing_example4,
+      landing_concept_item1_t, landing_concept_item1_d,
+      landing_concept_item2_t, landing_concept_item2_d,
+      landing_concept_item3_t, landing_concept_item3_d,
+      landing_mockup_hero, landing_mockup_service, landing_mockup_features,
+      landing_done_tag, landing_done_title_first, landing_done_title_last, landing_done_text,
+      landing_catalog_tag, landing_catalog_title_first, landing_catalog_title_last, landing_catalog_text,
+      landing_catalog_btn_text, landing_catalog_btn_link,
+      landing_stats_text, landing_stats_description,
+      landing_faqs
+    }).eq('id', 1);
+    
+    if (error) {
+      console.error('Settings Update Error:', error);
+      return res.status(400).json({ error: error.message });
+    }
+    res.json({ success: true });
+  });
+
+  // Testimonials Management
+  app.get('/api/testimonials', async (req, res) => {
+    const { data, error } = await supabase.from('testimonials').select('*').order('created_at', { ascending: false });
+    if (error) return res.status(400).json({ error: error.message });
+    res.json(data);
+  });
+
+  app.post('/api/admin/testimonials', authenticateMaster, async (req, res) => {
+    const { name, content, rating } = req.body;
+    const { data, error } = await supabase.from('testimonials').insert([{ 
+      name, 
+      content, 
+      rating: parseInt(rating as any) || 5 
+    }]).select();
+    if (error) return res.status(400).json({ error: error.message });
+    res.json(data[0]);
+  });
+
+  app.delete('/api/admin/testimonials/:id', authenticateMaster, async (req, res) => {
+    const { error } = await supabase.from('testimonials').delete().eq('id', req.params.id);
     if (error) return res.status(400).json({ error: error.message });
     res.json({ success: true });
   });
@@ -376,18 +442,16 @@ async function setupApp() {
     res.json(plans);
   });
 
-  app.post('/api/admin/plans', authenticateMaster, async (req, res) => {
-    const { name, months } = req.body;
-    const { data, error } = await supabase.from('plans').insert({ name, months }).select().single();
+  app.get('/api/admin/plans/public', async (req, res) => {
+    const { data: plans, error } = await supabase.from('plans').select('*').order('id', { ascending: true });
     if (error) return res.status(400).json({ error: error.message });
-    res.json(data);
+    res.json(plans);
   });
 
-  app.put('/api/admin/plans/:id', authenticateMaster, async (req, res) => {
-    const { name, months } = req.body;
-    const { error } = await supabase.from('plans').update({ name, months }).eq('id', req.params.id);
+  app.get('/api/public/plans', async (req, res) => {
+    const { data: plans, error } = await supabase.from('plans').select('*').order('id', { ascending: true });
     if (error) return res.status(400).json({ error: error.message });
-    res.json({ success: true });
+    res.json(plans);
   });
 
   app.delete('/api/admin/plans/:id', authenticateMaster, async (req, res) => {
@@ -397,8 +461,48 @@ async function setupApp() {
   });
 
   app.get('/api/public/settings', async (req, res) => {
-    const { data: settings } = await supabase.from('system_settings').select('default_logo, default_phone').eq('id', 1).single();
+    const { data: settings } = await supabase.from('system_settings').select('*').eq('id', 1).single();
     res.json(settings || {});
+  });
+
+  app.post('/api/admin/plans', authenticateMaster, async (req, res) => {
+    const { name, months, price, description, features, billing_cycle, is_popular } = req.body;
+    const { data, error } = await supabase.from('plans').insert({ 
+      name, months, price: price || '0,00', description: description || '',
+      features: features || '', billing_cycle: billing_cycle || 'monthly',
+      is_popular: is_popular === true || is_popular === 1
+    }).select().single();
+    if (error) {
+      console.error('Plan Creation Error:', error);
+      return res.status(400).json({ error: error.message });
+    }
+    res.json(data);
+  });
+
+  app.put('/api/admin/plans/:id', authenticateMaster, async (req, res) => {
+    const { name, months, price, description, features, billing_cycle, is_popular } = req.body;
+    try {
+      // Use RPC to bypass potential schema cache issues (PGRST204)
+      const { error } = await supabase.rpc('update_plan_direct', {
+        p_id: parseInt(req.params.id),
+        p_name: name,
+        p_months: months,
+        p_price: price || '0,00',
+        p_description: description || '',
+        p_features: features || '',
+        p_billing_cycle: billing_cycle || 'monthly',
+        p_is_popular: is_popular === true || is_popular === 1
+      });
+
+      if (error) {
+        console.error('Plan Update RPC Error:', error);
+        return res.status(400).json({ error: error.message });
+      }
+      res.json({ success: true });
+    } catch (err: any) {
+      console.error('Plan Update Catch Error:', err);
+      res.status(500).json({ error: 'Erro interno ao atualizar plano' });
+    }
   });
 
   // Public Profile Route
@@ -456,8 +560,8 @@ async function setupApp() {
         name,
         image,
         description,
-        colors,
-        images,
+        colors: Array.isArray(colors) ? JSON.stringify(colors) : (colors || '["#000000"]'),
+        images: Array.isArray(images) ? JSON.stringify(images) : (images || '[]'),
         consortium_image,
         liberacred_image,
         has_liberacred: !!has_liberacred,
@@ -491,8 +595,8 @@ async function setupApp() {
         name,
         image,
         description,
-        colors,
-        images,
+        colors: Array.isArray(colors) ? JSON.stringify(colors) : (colors || '["#000000"]'),
+        images: Array.isArray(images) ? JSON.stringify(images) : (images || '[]'),
         consortium_image,
         liberacred_image,
         has_liberacred: !!has_liberacred,
@@ -511,7 +615,7 @@ async function setupApp() {
         show_consortium_plans: !!show_consortium_plans,
         consortium_plans: Array.isArray(consortium_plans) ? JSON.stringify(consortium_plans) : (consortium_plans || '[]')
       })
-      .eq('id', req.params.id)
+      .eq('id', parseInt(req.params.id))
       .eq('user_id', req.user.id);
     
     if (error) return res.status(400).json({ error: error.message });
@@ -522,12 +626,38 @@ async function setupApp() {
     const { error } = await supabase
       .from('products')
       .delete()
-      .eq('id', req.params.id)
+      .eq('id', parseInt(req.params.id))
       .eq('user_id', req.user.id);
     
     if (error) return res.status(400).json({ error: error.message });
     res.json({ success: true });
   });
+
+  app.post('/api/products/:id/view', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { data } = await supabase.from('products').select('views').eq('id', id).single();
+      const views = (data?.views || 0) + 1;
+      await supabase.from('products').update({ views }).eq('id', id);
+      res.json({ success: true, views });
+    } catch (e) {
+      res.status(500).json({ error: 'Server error parsing views' });
+    }
+  });
+
+  app.post('/api/products/:id/sale', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { data } = await supabase.from('products').select('sales').eq('id', id).single();
+      const sales = (data?.sales || 0) + 1;
+      await supabase.from('products').update({ sales }).eq('id', id);
+      res.json({ success: true, sales });
+    } catch (e) {
+      res.status(500).json({ error: 'Server error parsing sales' });
+    }
+  });
+
+
 
   // Dynamic OG Tags for profiles (Must be AFTER API routes but BEFORE Vite/Prod fallbacks)
   app.get('/:slug', async (req, res, next) => {
@@ -592,14 +722,7 @@ async function setupApp() {
     console.log('✅ Vite middleware integrated as fallback for system routes');
   }
 
-  // static file serving is done in production mode only
-  if (!isVercel && process.env.NODE_ENV === 'production') {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  }
+
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
