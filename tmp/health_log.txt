@@ -1,0 +1,6 @@
+--- Database Health Check ---
+Profiles: 2 rows
+Products: 10 rows
+System Settings: 1 rows
+No Base64 images detected in products table (first 100 rows).
+--- End of Check ---
