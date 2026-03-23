@@ -276,22 +276,24 @@ export default function LandingPage() {
       {/* Mobile Menu Overlay */}
       <AnimatePresence>
         {mobileMenuOpen && (
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-0 z-50 bg-white pt-32 px-6 md:hidden"
-          >
-            <div className="flex flex-col gap-6 text-center">
-              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-black text-slate-900 uppercase">Recursos</a>
-              <a href="#concept" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-black text-slate-900 uppercase">O que é?</a>
-              <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-black text-slate-900 uppercase">Planos</a>
-              <hr className="border-slate-100" />
-              <div className="grid grid-cols-1 gap-4">
-                 <Link to="/login" className="py-5 text-xl font-black uppercase text-slate-600">Login</Link>
-                 <a href={registerUrl} target="_blank" rel="noopener noreferrer" className="bg-blue-600 text-white py-6 rounded-3xl font-black uppercase tracking-widest text-lg shadow-2xl shadow-blue-200">Quero o Meu Cartão</a>
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="fixed inset-0 z-50 bg-white pt-24 px-8 md:hidden"
+            >
+              <div className="flex flex-col gap-1 text-center">
+                <a href="#features" onClick={() => setMobileMenuOpen(false)} className="py-4 text-lg font-black text-slate-900 uppercase tracking-tighter">Recursos</a>
+                <a href="#concept" onClick={() => setMobileMenuOpen(false)} className="py-4 text-lg font-black text-slate-900 uppercase tracking-tighter">O que é?</a>
+                <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="py-4 text-lg font-black text-slate-900 uppercase tracking-tighter">Planos</a>
+                
+                <div className="mt-4 pt-4 border-t border-slate-50 flex flex-col gap-8">
+                   <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="text-lg font-black uppercase text-slate-400 hover:text-blue-600 transition-colors tracking-tighter">Login</Link>
+                   <a href={registerUrl} target="_blank" rel="noopener noreferrer" className="mx-4 bg-blue-600 text-white py-6 rounded-2xl font-black uppercase tracking-widest text-lg shadow-2xl shadow-blue-600/10 active:scale-95 transition-all flex items-center justify-center gap-3">
+                     COMEÇAR AGORA <ArrowRight className="w-6 h-6" />
+                   </a>
+                </div>
               </div>
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -585,7 +587,7 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, margin: "-100px" }}
                 transition={{ duration: 0.8 }}
-                className="lg:col-span-5 relative hidden lg:block"
+                className="lg:col-span-5 relative"
               >
                  <div className="relative">
                    {/* Background Decorative Phone */}
