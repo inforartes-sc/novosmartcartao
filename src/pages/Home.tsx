@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { Instagram, Facebook, MessageCircle, Bike, Globe, Youtube, Twitter, Music, Mail, Phone, Linkedin } from 'lucide-react';
+import { Instagram, Facebook, MessageCircle, Bike, Globe, Youtube, Twitter, Music, Mail, Phone, Linkedin, Map } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 export default function Home() {
@@ -55,6 +55,7 @@ export default function Home() {
       case 'linkedin': return Linkedin;
       case 'mail': return Mail;
       case 'phone': return Phone;
+      case 'map': return Map;
       default: return Globe;
     }
   };
@@ -169,7 +170,11 @@ export default function Home() {
             return (
               <motion.a
                 key={index}
-                href={link.url.startsWith('http') ? link.url : `https://${link.url}`}
+                href={
+                  link.icon === 'mail' ? `mailto:${link.url}` : 
+                  link.icon === 'map' ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(link.url)}` : 
+                  (link.url.startsWith('http') ? link.url : `https://${link.url}`)
+                }
                 target="_blank"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}

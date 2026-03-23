@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Instagram, Facebook, MessageCircle, ArrowLeft, Package, Search, ChevronDown } from 'lucide-react';
+import { Instagram, Facebook, MessageCircle, ArrowLeft, Package, Search, ChevronDown, Map, Globe, Youtube, Music, Twitter, Mail, Phone, Linkedin } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
@@ -158,6 +158,40 @@ export default function Catalog() {
                     <Facebook className="w-5 h-5" />
                   </a>
                 )}
+                {(() => {
+                   const socialLinks = typeof user.social_links === 'string' ? JSON.parse(user.social_links) : (user.social_links || []);
+                   return socialLinks.map((link: any, index: number) => {
+                     const SelectedIcon = (id: string) => {
+                        switch(id) {
+                          case 'instagram': return Instagram;
+                          case 'facebook': return Facebook;
+                          case 'youtube': return Youtube;
+                          case 'tiktok': return Music;
+                          case 'twitter': return Twitter;
+                          case 'linkedin': return Linkedin;
+                          case 'mail': return Mail;
+                          case 'phone': return Phone;
+                          case 'map': return Map;
+                          default: return Globe;
+                        }
+                     };
+                     const Icon = SelectedIcon(link.icon);
+                     return (
+                       <a 
+                         key={index} 
+                         href={
+                            link.icon === 'mail' ? `mailto:${link.url}` : 
+                            link.icon === 'map' ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(link.url)}` : 
+                            (link.url.startsWith('http') ? link.url : `https://${link.url}`)
+                         }
+                         target="_blank" 
+                         className="p-3 bg-gray-500 text-white rounded-xl hover:scale-110 transition-transform shadow-lg shadow-gray-100"
+                       >
+                         <Icon className="w-5 h-5" />
+                       </a>
+                     );
+                   });
+                })()}
               </div>
             </div>
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Save, Camera, Plus, Trash2, Globe, Youtube, Instagram as InstaIcon, Facebook as FBIcon, Twitter, Music, Mail, Phone, Linkedin, Key, Eye, EyeOff } from 'lucide-react';
+import { Save, Camera, Plus, Trash2, Globe, Youtube, Instagram as InstaIcon, Facebook as FBIcon, Twitter, Music, Mail, Phone, Linkedin, Map, Key, Eye, EyeOff } from 'lucide-react';
 import { uploadImage } from '../lib/supabase';
 
 interface AdminProfileProps {
@@ -18,6 +18,7 @@ const ICON_OPTIONS = [
   { id: 'linkedin', label: 'LinkedIn', icon: Linkedin },
   { id: 'mail', label: 'E-mail', icon: Mail },
   { id: 'phone', label: 'Telefone', icon: Phone },
+  { id: 'map', label: 'Endereço/Mapa', icon: Map },
 ];
 
 export default function AdminProfile({ user, onUpdate }: AdminProfileProps) {
