@@ -44,5 +44,6 @@ export interface FinancingFormData {
   cnh: 'sim' | 'nao';
   renda: string;
   cep: string;
+  endereco: string;
   cor: string;
 }

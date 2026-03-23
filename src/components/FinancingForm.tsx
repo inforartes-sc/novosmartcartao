@@ -25,6 +25,7 @@ export default function FinancingForm({ initialModel, initialProductId, initialC
     cnh: 'sim',
     renda: '',
     cep: '',
+    endereco: '',
     cor: initialColor || ''
   });
   const [products, setProducts] = useState<any[]>(allProducts || []);
@@ -120,6 +121,7 @@ export default function FinancingForm({ initialModel, initialProductId, initialC
 Nome: ${formData.nome}
 Cidade: ${formData.cidade}
 CEP: ${formData.cep}
+Endereço: ${formData.endereco}
 Nascimento: ${formData.nascimento}
 CPF: ${formData.cpf}
 Telefone: ${formData.telefone}
@@ -175,6 +177,18 @@ Renda: ${formData.renda}`;
             placeholder="00000-000"
           />
         </div>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Endereço Residencial</label>
+        <input
+          type="text"
+          name="endereco"
+          required
+          value={formData.endereco}
+          onChange={handleChange}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+          placeholder="Rua, número, bairro..."
+        />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
