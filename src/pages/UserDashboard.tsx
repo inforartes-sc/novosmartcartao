@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, Link, Routes, Route, useLocation } from 'react-router-dom';
 import { User, Package, LogOut, LayoutDashboard, ExternalLink, Palette, Copy, Share2, MousePointer2, Bell, Calendar, AlertTriangle, TrendingUp, Crown, CheckCircle, QrCode, Download, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { QRCodeCanvas } from 'qrcode.react';
 import AdminProfile from './AdminProfile';
 import AdminProducts from './AdminProducts';
@@ -9,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { SYSTEM_VERSION } from '../config';
+import { Menu } from 'lucide-react';
 
 export default function UserDashboard() {
   const { user, loading, logout, setUser } = useAuth();
@@ -18,6 +20,7 @@ export default function UserDashboard() {
   const [products, setProducts] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>(null);
   const [showQR, setShowQR] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -87,85 +90,102 @@ export default function UserDashboard() {
   const isExpiring = daysLeft !== null && daysLeft <= 10;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0">
-        <div className="p-6 border-b border-gray-100 font-heading shrink-0">
-          <h2 className="text-xl font-bold text-[#003da5]">Painel de Controle</h2>
-        </div>
-        
-        <nav className="flex-grow p-4 space-y-2 overflow-y-auto scrollbar-hide">
-          <Link
-            to="/dashboard"
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
-              isActive('/dashboard') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-blue-50/50 hover:text-blue-600'
-            }`}
-          >
-            <LayoutDashboard className="w-5 h-5" />
-            Dashboard
-          </Link>
-          <Link
-            to="/dashboard/perfil"
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
-              isActive('/dashboard/perfil') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-blue-50/50 hover:text-blue-600'
-            }`}
-          >
-            <User className="w-5 h-5" />
-            Meu Perfil
-          </Link>
-          <Link
-            to="/dashboard/produtos"
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
-              isActive('/dashboard/produtos') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-blue-50/50 hover:text-blue-600'
-            }`}
-          >
-            <Package className="w-5 h-5" />
-            Produtos
-          </Link>
-          <Link
-            to="/dashboard/tema"
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
-              isActive('/dashboard/tema') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-blue-50/50 hover:text-blue-600'
-            }`}
-          >
-            <Palette className="w-5 h-5" />
-            Tema
-          </Link>
-        </nav>
+    <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
+      {/* Mobile Header */}
+      <header className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-40 flex items-center justify-between">
+        <h2 className="text-lg font-bold text-[#003da5]">Painel</h2>
+        <button 
+          onClick={() => setIsSidebarOpen(true)}
+          className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
+        >
+          <Menu className="w-6 h-6 text-gray-600" />
+        </button>
+      </header>
 
-        <div className="shrink-0">
-          <div className="p-4 border-t border-gray-100">
-            <a
-              href={`/${user.slug}`}
-              target="_blank"
-              className="flex items-center gap-3 px-4 py-3 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all font-medium mb-2"
+      {/* Sidebar Backdrop (Mobile) */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[50] lg:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-[60] w-72 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:w-64 lg:static lg:h-screen lg:shrink-0
+        ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'}
+      `}>
+        <div className="flex flex-col h-full overflow-hidden">
+          <div className="p-6 border-b border-gray-100 font-heading shrink-0 flex items-center justify-between">
+            <h2 className="text-xl font-bold text-[#003da5]">Painel de Controle</h2>
+            <button 
+              onClick={() => setIsSidebarOpen(false)}
+              className="lg:hidden p-2 hover:bg-gray-100 rounded-full"
             >
-              <ExternalLink className="w-5 h-5" />
-              Ver meu Cartão
-            </a>
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-all font-medium"
-            >
-              <LogOut className="w-5 h-5" />
-              Sair
+              <X className="w-5 h-5 text-gray-400" />
             </button>
           </div>
           
-          {/* Fixed Branding */}
-          <div className="p-8 border-t border-gray-50 flex flex-col items-center justify-center bg-gray-50/50">
-            {settings?.footer_logo ? (
-                <img src={settings.footer_logo} alt="Consultor Logo" className="h-14 w-auto object-contain mb-3 mx-auto" />
-            ) : (
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 text-center">Tecnologia Smart Cartão</span>
-            )}
-            <span className="text-[10px] font-black text-[#003da5] tracking-widest">{SYSTEM_VERSION}</span>
+          <nav className="flex-grow p-4 space-y-2 overflow-y-auto scrollbar-hide">
+            {[
+              { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+              { to: '/dashboard/perfil', icon: User, label: 'Meu Perfil' },
+              { to: '/dashboard/produtos', icon: Package, label: 'Produtos' },
+              { to: '/dashboard/tema', icon: Palette, label: 'Tema' },
+            ].map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                onClick={() => setIsSidebarOpen(false)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
+                  isActive(item.to) ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-blue-50/50 hover:text-blue-600'
+                }`}
+              >
+                <item.icon className="w-5 h-5" />
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="shrink-0">
+            <div className="p-4 border-t border-gray-100">
+              <a
+                href={`/${user.slug}`}
+                target="_blank"
+                className="flex items-center gap-3 px-4 py-3 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all font-medium mb-2"
+              >
+                <ExternalLink className="w-5 h-5" />
+                Ver meu Cartão
+              </a>
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-all font-medium"
+              >
+                <LogOut className="w-5 h-5" />
+                Sair
+              </button>
+            </div>
+            
+            {/* Fixed Branding */}
+            <div className="p-8 border-t border-gray-50 flex flex-col items-center justify-center bg-gray-50/50">
+              {settings?.footer_logo ? (
+                  <img src={settings.footer_logo} alt="Consultor Logo" className="h-10 w-auto object-contain mb-3 mx-auto" />
+              ) : (
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 text-center">Tecnologia Smart Cartão</span>
+              )}
+              <span className="text-[10px] font-black text-[#003da5] tracking-widest">{SYSTEM_VERSION}</span>
+            </div>
           </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-grow p-8 overflow-y-auto">
+      <main className="flex-grow p-4 lg:p-8 overflow-y-auto w-full max-w-7xl mx-auto lg:mx-0">
         {user.admin_message && (
           <div className="mb-6 bg-blue-600 text-white p-5 rounded-[24px] shadow-lg shadow-blue-200 border border-blue-500 animate-in slide-in-from-top-4 duration-500 flex items-center gap-4 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16 blur-2xl group-hover:bg-white/20 transition-all duration-700"></div>

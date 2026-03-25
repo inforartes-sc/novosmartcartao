@@ -46,24 +46,22 @@ export default function AdminTheme({ user, onUpdate }: AdminThemeProps) {
   };
 
   return (
-    <div className="max-w-2xl">
-      <div className="flex items-center justify-between mb-8">
+    <div className="max-w-2xl mx-auto lg:mx-0 font-sans">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 font-heading">Personalizar Tema</h1>
-          <p className="text-gray-500">Ajuste as cores principais do seu cartão digital.</p>
+          <h1 className="text-2xl lg:text-3xl font-black text-gray-900 uppercase tracking-tight">Personalizar Tema</h1>
+          <p className="text-xs lg:text-sm text-gray-400 font-bold uppercase tracking-widest mt-1">Ajuste as cores principais do seu cartão</p>
         </div>
         <button 
           onClick={resetTheme}
-          className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors"
+          className="flex items-center justify-center gap-2 text-[10px] font-black text-gray-400 hover:text-blue-600 transition-colors bg-gray-50 hover:bg-blue-50 px-4 py-2 rounded-xl border border-gray-100 uppercase tracking-widest"
         >
           <RotateCcw className="w-4 h-4" />
-          Resetar
+          Resetar Cores
         </button>
       </div>
 
-
-
-      <form onSubmit={handleSubmit} className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-8">
+      <form onSubmit={handleSubmit} className="bg-white p-5 lg:p-8 rounded-3xl lg:rounded-[2rem] shadow-sm border border-gray-100 space-y-8 lg:space-y-10">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-4">
             <div className="flex items-center gap-3 mb-2 text-[#003da5]">

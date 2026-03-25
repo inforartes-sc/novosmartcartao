@@ -1020,27 +1020,25 @@ export default function AdminProducts() {
             .map((product) => (
             <div 
               key={product.id} 
-              className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-xl hover:shadow-gray-100 transition-all duration-300"
+              className="bg-white p-4 lg:p-5 rounded-3xl lg:rounded-[2rem] shadow-sm border border-gray-100 flex flex-col lg:flex-row lg:items-center justify-between group hover:shadow-xl hover:shadow-gray-100 transition-all duration-300 gap-6"
             >
-              <div className="flex items-center gap-6">
-                <div className="w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center overflow-hidden border border-gray-50">
+              <div className="flex items-center gap-4 lg:gap-6">
+                <div className="w-20 h-20 lg:w-24 lg:h-24 bg-gray-50 rounded-2xl flex items-center justify-center overflow-hidden border border-gray-50 shrink-0">
                   <img src={product.image} alt={product.name} className="w-full h-full object-contain p-2 transition-transform duration-500 group-hover:scale-110" referrerPolicy="no-referrer" />
                 </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 text-lg">{product.name}</h3>
-                  <p className="text-sm text-gray-500 line-clamp-1 max-w-md">{product.description}</p>
-                  <div className="flex gap-1.5 mt-2">
-                    {(typeof product.colors === 'string' ? JSON.parse(product.colors) : product.colors || []).slice(0, 5).map((c: string) => (
-                      <div key={c} className="w-3 h-3 rounded-full border border-gray-100" style={{ backgroundColor: c }} />
-                    ))}
-                    {product.has_liberacred && <span className="text-[10px] font-bold bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full uppercase tracking-tighter">Liberacred</span>}
-                    {product.is_highlighted && <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full uppercase tracking-tighter">Destaque</span>}
-                                        {product.is_new && <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full uppercase tracking-tighter">Novidade</span>}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-black text-gray-900 text-base lg:text-xl truncate">{product.name}</h3>
+                  <p className="text-xs lg:text-sm text-gray-400 font-bold uppercase tracking-widest mt-0.5">{product.brand || 'Sem Marca'}</p>
+                  <div className="flex flex-wrap gap-1.5 mt-2.5">
+                    {product.has_liberacred && <span className="text-[9px] font-black bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-lg uppercase tracking-wider">Liberacred</span>}
+                    {product.is_highlighted && <span className="text-[9px] font-black bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-lg uppercase tracking-wider">Destaque</span>}
+                    {product.is_new && <span className="text-[9px] font-black bg-purple-100 text-purple-700 px-2.5 py-1 rounded-lg uppercase tracking-wider">Novidade</span>}
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-4 pr-2">
-                <div className="flex flex-col items-center">
+
+              <div className="flex items-center justify-between lg:justify-end gap-2 lg:gap-6 pt-4 lg:pt-0 border-t lg:border-t-0 border-gray-50">
+                <div className="flex flex-col items-center shrink-0">
                   <label className="relative inline-flex items-center cursor-pointer group">
                     <input 
                       type="checkbox" 
@@ -1086,24 +1084,24 @@ export default function AdminProducts() {
                 <div className="flex gap-2">
                   <button 
                     onClick={() => handleDuplicate(product)}
-                    className="p-3 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-2xl transition-all"
+                    className="p-3.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-2xl transition-all"
                     title="Duplicar"
                   >
-                    <Copy className="w-5 h-5" />
+                    <Copy className="w-5 h-5 lg:w-6 lg:h-6" />
                   </button>
                   <button 
                     onClick={() => handleEdit(product)}
-                    className="p-3 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-2xl transition-all"
+                    className="p-3.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-2xl transition-all"
                     title="Editar"
                   >
-                    <Edit2 className="w-5 h-5" />
+                    <Edit2 className="w-5 h-5 lg:w-6 lg:h-6" />
                   </button>
                   <button 
                     onClick={() => handleDeleteProduct(product.id)}
-                    className="p-3 text-red-500 bg-red-50 hover:bg-red-100 rounded-2xl transition-all"
+                    className="p-3.5 text-red-500 bg-red-50 hover:bg-red-100 rounded-2xl transition-all"
                     title="Excluir"
                   >
-                    <Trash2 className="w-5 h-5" />
+                    <Trash2 className="w-5 h-5 lg:w-6 lg:h-6" />
                   </button>
                 </div>
               </div>

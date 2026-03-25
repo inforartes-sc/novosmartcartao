@@ -126,10 +126,10 @@ export default function AdminProfile({ user, onUpdate }: AdminProfileProps) {
   };
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Editar Perfil</h1>
+    <div className="max-w-2xl mx-auto lg:mx-0">
+      <h1 className="text-2xl lg:text-3xl font-black text-gray-900 mb-8 uppercase tracking-tight">Editar Perfil</h1>
 
-      <form onSubmit={handleSubmit} className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+      <form onSubmit={handleSubmit} className="bg-white p-5 lg:p-8 rounded-3xl lg:rounded-[2rem] shadow-sm border border-gray-100 space-y-6 lg:space-y-8">
         {/* Profile Image Upload */}
         <div className="flex flex-col items-center mb-6">
           <div className="relative group">
@@ -354,10 +354,10 @@ export default function AdminProfile({ user, onUpdate }: AdminProfileProps) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-100 disabled:opacity-50"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-2 shadow-xl shadow-blue-100 disabled:opacity-50 uppercase tracking-widest text-xs"
         >
           <Save className="w-5 h-5" />
-          {loading ? 'Salvando...' : 'Salvar Alterações'}
+          {loading ? 'Sincronizando...' : 'Salvar Perfil'}
         </button>
       </form>
 
