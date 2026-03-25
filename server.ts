@@ -569,7 +569,8 @@ async function setupApp() {
       .select('*')
       .eq('user_id', profile.id);
 
-    res.json({ user: profile, products: products || [] });
+    const activeProducts = (products || []).filter(p => p.is_active !== false);
+    res.json({ user: profile, products: activeProducts });
   });
 
   // Product Routes
@@ -615,7 +616,8 @@ async function setupApp() {
         financing_plans: Array.isArray(req.body.financing_plans) ? JSON.stringify(req.body.financing_plans) : (req.body.financing_plans || '[]'),
         cash_price: req.body.cash_price || null,
         card_installments: req.body.card_installments || null,
-        card_interest: !!req.body.card_interest
+        card_interest: !!req.body.card_interest,
+        is_active: req.body.is_active !== undefined ? !!req.body.is_active : true
       })
       .select('id')
       .single();
@@ -625,38 +627,31 @@ async function setupApp() {
   });
 
   app.put('/api/products/:id', authenticate, async (req: any, res) => {
-    const { name, image, description, colors, images, consortium_image, liberacred_image, has_liberacred, has_consortium, is_highlighted, is_new, year, price, mileage, brand, condition, fuel, transmission, color, optionals, show_consortium_plans, consortium_plans } = req.body;
+    const updateData: any = {};
+    const fields = [
+      'name', 'image', 'description', 'colors', 'images', 'consortium_image', 
+      'liberacred_image', 'has_liberacred', 'has_consortium', 'is_highlighted', 
+      'is_new', 'year', 'price', 'mileage', 'brand', 'condition', 'fuel', 
+      'transmission', 'color', 'optionals', 'show_consortium_plans', 
+      'consortium_plans', 'show_financing_plans', 'financing_plans',
+      'cash_price', 'card_installments', 'card_interest', 'is_active'
+    ];
+
+    fields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        if (['colors', 'images', 'optionals', 'consortium_plans', 'financing_plans'].includes(field)) {
+          updateData[field] = Array.isArray(req.body[field]) ? JSON.stringify(req.body[field]) : req.body[field];
+        } else if (['has_liberacred', 'has_consortium', 'is_highlighted', 'is_new', 'show_consortium_plans', 'show_financing_plans', 'card_interest', 'is_active'].includes(field)) {
+          updateData[field] = !!req.body[field];
+        } else {
+          updateData[field] = req.body[field] || null;
+        }
+      }
+    });
+
     const { error } = await supabase
       .from('products')
-      .update({
-        name,
-        image,
-        description,
-        colors: Array.isArray(colors) ? JSON.stringify(colors) : (colors || '["#000000"]'),
-        images: Array.isArray(images) ? JSON.stringify(images) : (images || '[]'),
-        consortium_image,
-        liberacred_image,
-        has_liberacred: !!has_liberacred,
-        has_consortium: has_consortium !== undefined ? !!has_consortium : true,
-        is_highlighted: !!is_highlighted,
-        is_new: !!is_new,
-        year: year || null,
-        price: price || null,
-        mileage: mileage || null,
-        brand,
-        condition,
-        fuel,
-        transmission,
-        color,
-        optionals: Array.isArray(optionals) ? JSON.stringify(optionals) : (optionals || '[]'),
-        show_consortium_plans: !!show_consortium_plans,
-        consortium_plans: Array.isArray(consortium_plans) ? JSON.stringify(consortium_plans) : (consortium_plans || '[]'),
-        show_financing_plans: !!req.body.show_financing_plans,
-        financing_plans: Array.isArray(req.body.financing_plans) ? JSON.stringify(req.body.financing_plans) : (req.body.financing_plans || '[]'),
-        cash_price: req.body.cash_price || null,
-        card_installments: req.body.card_installments || null,
-        card_interest: !!req.body.card_interest
-      })
+      .update(updateData)
       .eq('id', parseInt(req.params.id))
       .eq('user_id', req.user.id);
     

@@ -4,23 +4,16 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 
-const NovidadesSlider = ({ products, onProductClick }: { products: any[], onProductClick: (id: string | number) => void }) => {
-  const [index, setIndex] = useState(0);
+const MemoProductCard = React.memo(ProductCard);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setIndex(prev => (prev + 1) % products.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [products.length]);
-
+const NovidadesSlider = ({ products, onProductClick, currentIndex, onIndexChange }: { products: any[], onProductClick: (id: string | number) => void, currentIndex: number, onIndexChange: (idx: number) => void }) => {
   return (
     <div className="w-full h-full relative group block outline-none rounded-[inherit]">
       <AnimatePresence mode="wait">
         <motion.img
-          key={products[index].id}
-          src={products[index].image}
-          onClick={() => onProductClick(products[index].id)}
+          key={products[currentIndex].id}
+          src={products[currentIndex].image}
+          onClick={() => onProductClick(products[currentIndex].id)}
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -50 }}
@@ -37,9 +30,9 @@ const NovidadesSlider = ({ products, onProductClick }: { products: any[], onProd
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              setIndex(i);
+              onIndexChange(i);
             }}
-            className={`h-1.5 rounded-full transition-all duration-500 pointer-events-auto ${i === index ? 'bg-gray-800 w-8 shadow-sm' : 'bg-gray-800/20 w-3 hover:bg-gray-800/40'}`} 
+            className={`h-1.5 rounded-full transition-all duration-500 pointer-events-auto ${i === currentIndex ? 'bg-gray-800 w-8 shadow-sm' : 'bg-gray-800/20 w-3 hover:bg-gray-800/40'}`} 
           />
         ))}
       </div>
@@ -55,6 +48,7 @@ export default function Catalog() {
   const [loading, setLoading] = useState(true);
   const [activeModalProductId, setActiveModalProductId] = useState<string | number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [heroIndex, setHeroIndex] = useState(0);
   const [selectedYear, setSelectedYear] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedCondition, setSelectedCondition] = useState('');
@@ -72,23 +66,42 @@ export default function Catalog() {
     .finally(() => setLoading(false));
   }, [slug]);
 
+  const heroProducts = React.useMemo(() => {
+    if (!data?.products) return [];
+    return data.products.filter((p: any) => p.is_new);
+  }, [data?.products]);
+
+  const filteredProducts = React.useMemo(() => {
+    if (!data?.products) return [];
+    return data.products.filter((product: any) => {
+      const searchStr = `${product.brand} ${product.name} ${product.year} ${product.color} ${product.description}`.toLowerCase();
+      const matchesSearch = searchTerm === '' || searchStr.includes(searchTerm.toLowerCase());
+      const matchesYear = selectedYear === '' || String(product.year) === selectedYear;
+      const matchesColor = selectedColor === '' || product.color === selectedColor;
+      const matchesCondition = selectedCondition === '' || product.condition === selectedCondition;
+      const matchesBrand = selectedBrand === '' || product.brand === selectedBrand;
+      
+      return matchesSearch && matchesYear && matchesColor && matchesCondition && matchesBrand;
+    });
+  }, [data?.products, searchTerm, selectedYear, selectedColor, selectedCondition, selectedBrand]);
+
+  const featuredFiltered = React.useMemo(() => {
+    return filteredProducts.filter((p: any) => p.is_highlighted);
+  }, [filteredProducts]);
+
+  useEffect(() => {
+    if (heroProducts.length <= 1) return;
+
+    const timer = setInterval(() => {
+      setHeroIndex(prev => (prev + 1) % heroProducts.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [heroProducts.length]);
+
   if (loading) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
   if (!data || data.error) return <div className="min-h-screen flex items-center justify-center text-red-500">Perfil não encontrado</div>;
 
   const { user, products } = data;
-
-  const filteredProducts = products.filter((product: any) => {
-    const searchStr = `${product.brand} ${product.name} ${product.year} ${product.color} ${product.description}`.toLowerCase();
-    const matchesSearch = searchTerm === '' || searchStr.includes(searchTerm.toLowerCase());
-    const matchesYear = selectedYear === '' || String(product.year) === selectedYear;
-    const matchesColor = selectedColor === '' || product.color === selectedColor;
-    const matchesCondition = selectedCondition === '' || product.condition === selectedCondition;
-    const matchesBrand = selectedBrand === '' || product.brand === selectedBrand;
-    
-    return matchesSearch && matchesYear && matchesColor && matchesCondition && matchesBrand;
-  });
-
-  const featuredFiltered = filteredProducts.filter((p: any) => p.is_highlighted);
 
   const isDark = (color: string) => {
     const hex = (color || '#ffffff').replace('#', '');
@@ -198,14 +211,29 @@ export default function Catalog() {
 
             {/* Mobile: Novidades Slider */}
             <div className="lg:hidden w-full mt-8">
-              <div className="relative w-full aspect-[4/3] rounded-[2rem] overflow-hidden shadow-lg border border-gray-100">
+              <div className="relative w-full aspect-[4/3] rounded-[2rem] overflow-hidden shadow-lg border border-gray-100 mb-4">
                 <div className="absolute top-4 left-4 z-30 pointer-events-none">
                   <span className="bg-purple-600 text-white text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">Novidades</span>
                 </div>
                 <NovidadesSlider 
                   products={products.filter((p: any) => p.is_new)} 
                   onProductClick={(id) => setActiveModalProductId(id)}
+                  currentIndex={heroIndex}
+                  onIndexChange={(idx) => setHeroIndex(idx)}
                 />
+              </div>
+              <div className="flex justify-center mb-6 relative z-[50]">
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const heroProducts = products.filter((p: any) => p.is_new);
+                    if (heroProducts[heroIndex]) setActiveModalProductId(heroProducts[heroIndex].id);
+                  }}
+                  className="w-full bg-white border border-gray-100 py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] text-gray-800 shadow-sm shadow-gray-100 active:scale-95 transition-all cursor-pointer pointer-events-auto"
+                >
+                  Ver Detalhes do Produto
+                </button>
               </div>
             </div>
 
@@ -218,7 +246,22 @@ export default function Catalog() {
                 <NovidadesSlider 
                   products={products.filter((p: any) => p.is_new)} 
                   onProductClick={(id) => setActiveModalProductId(id)}
+                  currentIndex={heroIndex}
+                  onIndexChange={(idx) => setHeroIndex(idx)}
                 />
+                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[100] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto">
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const heroProducts = products.filter((p: any) => p.is_new);
+                      if (heroProducts[heroIndex]) setActiveModalProductId(heroProducts[heroIndex].id);
+                    }}
+                    className="bg-white/95 backdrop-blur-md hover:bg-white text-gray-900 px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-wider shadow-2xl transition-all border border-white/50 cursor-pointer pointer-events-auto hover:scale-105 active:scale-95"
+                  >
+                    Ver Detalhes
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -348,7 +391,7 @@ export default function Catalog() {
                 .slice(0, 2)
                 .map((product: any) => (
                   <div key={product.id}>
-                    <ProductCard 
+                    <MemoProductCard 
                       product={{
                         ...product,
                         colors: typeof product.colors === 'string' ? JSON.parse(product.colors) : product.colors,
@@ -393,7 +436,7 @@ export default function Catalog() {
                   .filter((p: any) => !featuredFiltered.slice(0, 2).find((hp: any) => hp.id === p.id))
                   .map((product: any) => (
                     <div key={product.id}>
-                      <ProductCard 
+                      <MemoProductCard 
                         product={{
                           ...product,
                           colors: typeof product.colors === 'string' ? JSON.parse(product.colors) : product.colors,

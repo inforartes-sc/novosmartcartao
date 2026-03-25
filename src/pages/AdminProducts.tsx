@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { uploadImage } from '../lib/supabase';
 import { motion } from 'motion/react';
-import { Plus, Trash2, Package, Camera, Loader2, Edit2, X, Check, Copy, Calculator } from 'lucide-react';
+import { Plus, Trash2, Package, Camera, Loader2, Edit2, X, Check, Copy, Calculator, Search } from 'lucide-react';
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<any[]>([]);
@@ -53,11 +53,13 @@ export default function AdminProducts() {
     financing_plans: [] as { down_payment: string; installments: number; value: string }[],
     cash_price: '',
     card_installments: '',
-    card_interest: true
+    card_interest: true,
+    is_active: true
   });
 
   const [newPlan, setNewPlan] = useState({ installments: 0, value: '' });
   const [newFinancingPlan, setNewFinancingPlan] = useState({ down_payment: '', installments: 0, value: '' });
+  const [searchTerm, setSearchTerm] = useState('');
 
 
 
@@ -123,10 +125,16 @@ export default function AdminProducts() {
       const url = editingId ? `/api/products/${editingId}` : '/api/products';
       const method = editingId ? 'PUT' : 'POST';
 
+      const submissionData = {
+        ...formState,
+        card_installments: formState.card_installments ? `${formState.card_installments.replace('x', '')}x` : '',
+        card_interest: !!formState.card_interest
+      };
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formState),
+        body: JSON.stringify(submissionData),
       });
 
       if (res.ok) {
@@ -172,8 +180,9 @@ export default function AdminProducts() {
       show_financing_plans: !!product.show_financing_plans,
       financing_plans: typeof product.financing_plans === 'string' ? JSON.parse(product.financing_plans) : (product.financing_plans || []),
       cash_price: product.cash_price || '',
-      card_installments: product.card_installments || '',
-      card_interest: product.card_interest !== undefined ? !!product.card_interest : true
+      card_installments: (product.card_installments || '').replace('x', ''),
+      card_interest: product.card_interest === true || product.card_interest === 1 || String(product.card_interest) === 'true',
+      is_active: product.is_active !== false
     });
     setShowAddForm(true);
   };
@@ -206,8 +215,9 @@ export default function AdminProducts() {
       show_financing_plans: !!product.show_financing_plans,
       financing_plans: typeof product.financing_plans === 'string' ? JSON.parse(product.financing_plans) : (product.financing_plans || []),
       cash_price: product.cash_price || '',
-      card_installments: product.card_installments || '',
-      card_interest: product.card_interest !== undefined ? !!product.card_interest : true
+      card_installments: (product.card_installments || '').replace('x', ''),
+      card_interest: product.card_interest === true || product.card_interest === 1 || String(product.card_interest) === 'true',
+      is_active: product.is_active !== false
     });
     setShowAddForm(true);
   };
@@ -242,7 +252,8 @@ export default function AdminProducts() {
       financing_plans: [],
       cash_price: '',
       card_installments: '',
-      card_interest: true
+      card_interest: true,
+      is_active: true
     });
     setNewPlan({ installments: 0, value: '' });
     setNewFinancingPlan({ down_payment: '', installments: 0, value: '' });
@@ -266,6 +277,11 @@ export default function AdminProducts() {
     }
 
     setFormState({ ...formState, price: result });
+  };
+
+  const handleCardInstallmentsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, "");
+    setFormState({ ...formState, card_installments: value });
   };
 
   const addPlan = () => {
@@ -393,6 +409,27 @@ export default function AdminProducts() {
           <Plus className="w-5 h-5" />
           Novo Produto
         </button>
+      </div>
+
+      <div className="mb-8 p-6 bg-white rounded-3xl border border-gray-100 flex items-center gap-4 group transition-all hover:shadow-lg hover:shadow-blue-50">
+        <div className="p-2 bg-blue-50 rounded-xl text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white">
+          <Search className="w-5 h-5" />
+        </div>
+        <input 
+          type="text" 
+          placeholder="Pesquise por nome ou descrição do produto..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="flex-1 bg-transparent border-none outline-none font-medium text-gray-700 placeholder:text-gray-400"
+        />
+        {searchTerm && (
+          <button 
+            onClick={() => setSearchTerm('')}
+            className="p-1 px-3 bg-gray-100 hover:bg-gray-200 rounded-full text-[10px] font-black uppercase text-gray-500 transition-all"
+          >
+            Limpar
+          </button>
+        )}
       </div>
 
 
@@ -680,13 +717,18 @@ export default function AdminProducts() {
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-gray-500 mb-1 uppercase text-blue-600">Parcelas Cartão</label>
-                        <input
-                          type="text"
-                          value={formState.card_installments}
-                          onChange={(e) => setFormState({ ...formState, card_installments: e.target.value })}
-                          placeholder="Ex: 10x"
-                          className="w-full px-4 py-2.5 bg-white border border-blue-100 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                        />
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={formState.card_installments}
+                            onChange={handleCardInstallmentsChange}
+                            placeholder="Ex: 10"
+                            className="w-full px-4 py-2.5 bg-white border border-blue-100 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all pr-8"
+                          />
+                          {formState.card_installments && (
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">x</span>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center pt-5">
                         <label className="flex items-center gap-2 cursor-pointer group">
@@ -918,6 +960,17 @@ export default function AdminProducts() {
                 <label htmlFor="is_highlighted" className="text-sm font-bold text-emerald-900 cursor-pointer uppercase tracking-tight">Marcar como Destaque (Topo do Catálogo)</label>
               </div>
 
+              <div className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-100 rounded-2xl">
+                <input
+                  type="checkbox"
+                  id="is_active"
+                  checked={formState.is_active}
+                  onChange={(e) => setFormState({ ...formState, is_active: e.target.checked })}
+                  className="w-5 h-5 text-gray-600 focus:ring-gray-500 border-gray-300 rounded-lg cursor-pointer"
+                />
+                <label htmlFor="is_active" className="text-sm font-bold text-gray-700 cursor-pointer uppercase tracking-tight">Produto Ativo (Aparece no Catálogo)</label>
+              </div>
+
               <div className="flex items-center gap-3 p-4 bg-purple-50 border border-purple-100 rounded-2xl">
                 <input
                   type="checkbox"
@@ -959,7 +1012,12 @@ export default function AdminProducts() {
             <p className="text-sm opacity-60">Comece adicionando seu primeiro produto acima.</p>
           </div>
         ) : (
-          products.map((product) => (
+          products
+            .filter(product => 
+              product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+              product.description?.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+            .map((product) => (
             <div 
               key={product.id} 
               className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-xl hover:shadow-gray-100 transition-all duration-300"
@@ -977,32 +1035,77 @@ export default function AdminProducts() {
                     ))}
                     {product.has_liberacred && <span className="text-[10px] font-bold bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full uppercase tracking-tighter">Liberacred</span>}
                     {product.is_highlighted && <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full uppercase tracking-tighter">Destaque</span>}
-                    {product.is_new && <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full uppercase tracking-tighter">Novidade</span>}
+                                        {product.is_new && <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full uppercase tracking-tighter">Novidade</span>}
                   </div>
                 </div>
               </div>
-              <div className="flex gap-3 pr-2">
-                <button
-                  onClick={() => handleDuplicate(product)}
-                  className="p-3 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-2xl transition-all"
-                  title="Duplicar"
-                >
-                  <Copy className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => handleEdit(product)}
-                  className="p-3 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-2xl transition-all"
-                  title="Editar"
-                >
-                  <Edit2 className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => handleDeleteProduct(product.id)}
-                  className="p-3 text-red-500 bg-red-50 hover:bg-red-100 rounded-2xl transition-all"
-                  title="Excluir"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
+              <div className="flex items-center gap-4 pr-2">
+                <div className="flex flex-col items-center">
+                  <label className="relative inline-flex items-center cursor-pointer group">
+                    <input 
+                      type="checkbox" 
+                      className="sr-only peer"
+                      checked={product.is_active !== false}
+                      onChange={async (e) => {
+                        e.stopPropagation();
+                        const oldStatus = product.is_active !== false;
+                        const newStatus = !oldStatus;
+                        
+                        // Optimistic update
+                        setProducts(prev => prev.map(p => p.id === product.id ? { ...p, is_active: newStatus } : p));
+                        
+                        try {
+                          const res = await fetch(`/api/products/${product.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ is_active: newStatus })
+                          });
+                          
+                          if (res.ok) {
+                            toast.success(newStatus ? 'Produto Ativado!' : 'Produto Desativado!');
+                            fetchProducts();
+                          } else {
+                            const err = await res.json();
+                            toast.error(err.error || 'Erro ao atualizar status');
+                            // Rollback
+                            setProducts(prev => prev.map(p => p.id === product.id ? { ...p, is_active: oldStatus } : p));
+                          }
+                        } catch (err) {
+                          toast.error('Erro de conexão ao atualizar status');
+                          // Rollback
+                          setProducts(prev => prev.map(p => p.id === product.id ? { ...p, is_active: oldStatus } : p));
+                        }
+                      }}
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                  <span className={`text-[8px] font-bold uppercase mt-1 ${product.is_active !== false ? 'text-blue-600' : 'text-gray-400'}`}>
+                    {product.is_active !== false ? 'Ativo' : 'Inativo'}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => handleDuplicate(product)}
+                    className="p-3 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-2xl transition-all"
+                    title="Duplicar"
+                  >
+                    <Copy className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={() => handleEdit(product)}
+                    className="p-3 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-2xl transition-all"
+                    title="Editar"
+                  >
+                    <Edit2 className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteProduct(product.id)}
+                    className="p-3 text-red-500 bg-red-50 hover:bg-red-100 rounded-2xl transition-all"
+                    title="Excluir"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
             </div>
           ))

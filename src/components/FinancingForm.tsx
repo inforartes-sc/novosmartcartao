@@ -6,12 +6,23 @@ interface FinancingFormProps {
   initialModel?: string;
   initialProductId?: string | number;
   initialColor?: string;
+  initialEntrada?: string;
+  initialPlan?: { installments: number; value: string };
   allProducts?: any[];
   whatsappNumber?: string;
   onSubmitSuccess: () => void;
 }
 
-export default function FinancingForm({ initialModel, initialProductId, initialColor, allProducts, whatsappNumber, onSubmitSuccess }: FinancingFormProps) {
+export default function FinancingForm({ 
+  initialModel, 
+  initialProductId, 
+  initialColor, 
+  initialEntrada,
+  initialPlan,
+  allProducts, 
+  whatsappNumber, 
+  onSubmitSuccess 
+}: FinancingFormProps) {
   const [formData, setFormData] = useState<FinancingFormData>({
     nome: '',
     cidade: '',
@@ -20,7 +31,7 @@ export default function FinancingForm({ initialModel, initialProductId, initialC
     telefone: '',
     modelo: initialModel || '',
     modelo_id: initialProductId || '',
-    entrada: '',
+    entrada: initialEntrada || '',
     status: 'assalariado',
     cnh: 'sim',
     renda: '',
@@ -130,7 +141,7 @@ Telefone: ${formData.telefone}
 Modelo: ${formData.modelo}
 Cor do Veículo: ${formData.cor}
 Entrada: ${formData.entrada}
-Status: ${formData.status}
+${initialPlan ? `Plano Selecionado: ${initialPlan.installments}x de R$ ${initialPlan.value}/mês\n` : ''}Status: ${formData.status}
 CNH: ${formData.cnh}
 Renda: ${formData.renda}`;
     
@@ -304,7 +315,7 @@ Renda: ${formData.renda}`;
             name="status"
             value={formData.status}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
+            className="w-full px-4 py-2 border border-blue-100 bg-blue-50/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none font-medium"
           >
             <option value="assalariado">Sou assalariado</option>
             <option value="autonomo">Sou autônomo</option>
@@ -316,13 +327,23 @@ Renda: ${formData.renda}`;
             name="cnh"
             value={formData.cnh}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
+            className="w-full px-4 py-2 border border-blue-100 bg-blue-50/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none font-medium"
           >
             <option value="sim">Sim, possuo</option>
             <option value="nao">Não possuo</option>
           </select>
         </div>
       </div>
+
+      {initialPlan && (
+        <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-xl space-y-2">
+          <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Plano Selecionado</h4>
+          <div className="flex items-center gap-3">
+             <span className="bg-emerald-600 text-white px-3 py-1 rounded-full text-xs font-black">{initialPlan.installments}x</span>
+             <span className="text-emerald-800 font-medium">de <span className="text-emerald-700 font-extrabold text-lg">R$ {initialPlan.value}</span> /mês</span>
+          </div>
+        </div>
+      )}
       <button
         type="submit"
         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-200"

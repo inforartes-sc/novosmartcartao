@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import { Product } from '../types';
 import { motion } from 'motion/react';
-import { MessageCircle, Info, FileText, Calculator, CreditCard, ChevronLeft, ChevronRight, Package } from 'lucide-react';
+import { MessageCircle, Info, FileText, Calculator, CreditCard, ChevronLeft, ChevronRight, Package, Check } from 'lucide-react';
 import Modal from './Modal';
 import FinancingForm from './FinancingForm';
 import ThreeSixtyViewer from './ThreeSixtyViewer';
@@ -28,6 +28,7 @@ export default function ProductCard({
   const [activeModal, setActiveModal] = useState<'about' | 'consortium' | 'financing' | 'liberacred' | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isAutoPlayPaused, setIsAutoPlayPaused] = useState(false);
+  const [selectedFinancingIndex, setSelectedFinancingIndex] = useState<number | null>(null);
 
   const themeColor = primaryColor || '#003da5';
   const allImages = [product.image, ...(product.images || [])];
@@ -161,7 +162,12 @@ export default function ProductCard({
       <Modal
         isOpen={activeModal === 'about'}
         onClose={handleModalClose}
-        title={`Sobre o Veículo: ${product.name}`}
+        title={
+          <div className="flex flex-col pt-2">
+            <span className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mb-1">Sobre o Veículo</span>
+            <span className="text-xl font-black text-gray-900 uppercase tracking-tight leading-tight">{product.name}</span>
+          </div>
+        }
       >
         <div className="space-y-6">
           {product.threeSixtyImages ? (
@@ -342,18 +348,49 @@ export default function ProductCard({
 
               {product.financing_plans && product.financing_plans.length > 0 && (
                 <div className="grid grid-cols-1 gap-3">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1 mb-1">
+                    Escolha uma opção para simular:
+                  </p>
                   {product.financing_plans.map((plan, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-5 bg-blue-50/30 border border-blue-100 rounded-2xl shadow-sm transition-all hover:bg-blue-50">
-                      <div className="flex items-center gap-4">
+                    <div 
+                      key={idx} 
+                      onClick={() => setSelectedFinancingIndex(idx)}
+                      className={`flex items-center justify-between p-5 border rounded-2xl shadow-sm transition-all cursor-pointer ${
+                        selectedFinancingIndex === idx 
+                          ? 'bg-blue-600 border-blue-600 shadow-blue-200' 
+                          : 'bg-blue-50/30 border-blue-100 hover:bg-blue-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                          selectedFinancingIndex === idx 
+                            ? 'bg-white border-white text-blue-600' 
+                            : 'border-blue-200 text-transparent'
+                        }`}>
+                          {selectedFinancingIndex === idx && <Check className="w-3 h-3 stroke-[4px]" />}
+                        </div>
                         <div className="flex flex-col">
-                           <span className="text-[9px] font-bold text-gray-400 uppercase leading-none mb-1">Entrada R$ {plan.down_payment}</span>
+                           <span className={`text-xs font-black uppercase leading-none mb-1.5 ${selectedFinancingIndex === idx ? 'text-white/90' : 'text-blue-600'}`}>
+                             Entrada R$ {plan.down_payment}
+                           </span>
                            <div className="flex items-center gap-3">
-                             <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-black">{plan.installments}x</span>
-                             <span className="text-gray-700 font-medium">de <span className="text-blue-700 font-extrabold text-lg">R$ {plan.value}</span> /mês</span>
+                             <span className={`px-3 py-1 rounded-full text-xs font-black ${selectedFinancingIndex === idx ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'}`}>
+                               {plan.installments}x
+                             </span>
+                             <span className={`font-medium ${selectedFinancingIndex === idx ? 'text-white' : 'text-gray-700'}`}>
+                               de <span className={`font-extrabold text-lg ${selectedFinancingIndex === idx ? 'text-white' : 'text-blue-700'}`}>R$ {plan.value}</span> /mês
+                             </span>
                            </div>
                         </div>
                       </div>
-                      <Calculator className="w-5 h-5 text-blue-200" />
+                      <div className="flex flex-col items-end gap-1">
+                        <Calculator className={`w-5 h-5 ${selectedFinancingIndex === idx ? 'text-white/50' : 'text-blue-200'}`} />
+                        {selectedFinancingIndex === idx && (
+                          <span className="text-[8px] font-black text-white px-1.5 py-0.5 bg-white/20 rounded uppercase tracking-tighter">
+                            Selecionado
+                          </span>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -422,6 +459,11 @@ export default function ProductCard({
           initialModel={product.name} 
           initialProductId={product.id}
           initialColor={product.color}
+          initialEntrada={selectedFinancingIndex !== null ? product.financing_plans[selectedFinancingIndex].down_payment : undefined}
+          initialPlan={selectedFinancingIndex !== null ? { 
+            installments: product.financing_plans[selectedFinancingIndex].installments,
+            value: product.financing_plans[selectedFinancingIndex].value 
+          } : undefined}
           allProducts={allProducts}
           whatsappNumber={whatsappNumber}
           onSubmitSuccess={() => setActiveModal(null)} 

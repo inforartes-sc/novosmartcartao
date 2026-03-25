@@ -29,6 +29,7 @@ export interface Product {
   cash_price?: string;
   card_installments?: string;
   card_interest?: boolean;
+  is_active?: boolean;
 }
 
 export interface FinancingFormData {

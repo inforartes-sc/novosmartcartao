@@ -5,7 +5,7 @@ import { ReactNode } from 'react';
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title: string;
+  title: React.ReactNode;
   children: ReactNode;
 }
 
@@ -29,7 +29,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
           >
             <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl pointer-events-auto relative">
               <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between z-10">
-                <h3 className="text-xl font-bold text-gray-900">{title}</h3>
+                <div className="flex-1 mr-4">{title}</div>
                 <button
                   onClick={onClose}
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
