@@ -531,22 +531,19 @@ app.get('/api/public/settings', async (req, res) => {
   res.json(settings || {});
 });
 
-// Dynamic OG Tags for profiles
-app.get('/:slug', async (req, res, next) => {
+// Handle all SPA routes and profile slugs with metadata injection
+app.get(['/', '/login', '/register', '/admin', '/admin/*', '/dashboard', '/dashboard/*', '/plans', '/:slug'], async (req, res, next) => {
   const { slug } = req.params;
+  const fullPath = req.path;
   
-  // Reserved system paths
-  const reserved = [
-    'login', 'register', 'admin', 'dashboard', 'api', 
-    'assets', 'vite', '@vite', '@react-refresh', 'node_modules',
-    'favicon.ico', 'robots.txt'
-  ];
-  
-  if (slug.includes('.') || slug.startsWith('@')) {
+  // Skip API, assets, and files with dots
+  if (fullPath.startsWith('/api') || fullPath.includes('.')) {
     return next();
   }
 
-  const isReserved = reserved.includes(slug.toLowerCase());
+  // Reserved system paths (from server.ts)
+  const reservedSlugs = ['login', 'register', 'admin', 'dashboard', 'api', 'plans', 'assets', 'vite'];
+  const isProfileSlug = slug && !reservedSlugs.includes(slug.toLowerCase()) && !fullPath.includes('/', 1);
   
   try {
     // Read index.html from dist/ (production) or project root (fallback)
@@ -567,13 +564,13 @@ app.get('/:slug', async (req, res, next) => {
     
     let html = fs.readFileSync(indexPath, 'utf-8');
     
-    // Fallback values
+    // Default values for system pages
     let title = 'Smart Cartão';
     let description = 'Crie seu cartão digital agora';
     let image = 'https://smartcartao.com/og-default.png';
 
-    if (!isReserved) {
-      // Use ilike for case-insensitive slug match in production
+    // If it looks like a profile slug, try to fetch its metadata
+    if (isProfileSlug) {
       const { data: profile } = await supabase.from('profiles').select('*').ilike('slug', slug).single();
       
       if (profile) {
@@ -583,34 +580,10 @@ app.get('/:slug', async (req, res, next) => {
       }
     }
     
-    // Multiple replacements in case tags appear multiple times
+    // Perform metadata injection
     html = html.replaceAll('{{title}}', title)
                .replaceAll('{{description}}', description)
                .replaceAll('{{image}}', image);
-    
-    res.setHeader('Content-Type', 'text/html');
-    return res.status(200).send(html);
-  } catch (err) {
-    next();
-  }
-});
-
-// Final fallback for SPA (handles non-slug paths like /login or nested routes)
-app.get('*', (req, res, next) => {
-  // Pass API requests to specialized handlers
-  if (req.path.startsWith('/api') || req.path.includes('.')) return next();
-  
-  try {
-    const indexPath = fs.existsSync(path.join(process.cwd(), 'dist', 'index.html'))
-      ? path.join(process.cwd(), 'dist', 'index.html')
-      : path.join(process.cwd(), 'index.html');
-
-    if (!fs.existsSync(indexPath)) return next();
-
-    let html = fs.readFileSync(indexPath, 'utf-8');
-    html = html.replaceAll('{{title}}', 'Smart Cartão')
-               .replaceAll('{{description}}', 'Crie seu cartão digital agora')
-               .replaceAll('{{image}}', 'https://smartcartao.com/og-default.png');
     
     res.setHeader('Content-Type', 'text/html');
     return res.status(200).send(html);
