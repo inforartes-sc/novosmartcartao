@@ -147,7 +147,7 @@ export default function Catalog() {
                 className="w-32 h-32 lg:w-44 lg:h-44 mb-4"
               >
                 <img
-                  src={user.profile_image || "https://omeucartao.com.br/wp-content/uploads/2024/11/Rose-256x300.png"}
+                  src={user.profile_image || settings?.default_logo}
                   alt={user.display_name}
                   className="w-full h-full object-cover rounded-full border-4 shadow-xl"
                   style={{ borderColor: user.primary_color || '#003da5' }}
@@ -164,7 +164,7 @@ export default function Catalog() {
                     <Instagram className="w-5 h-5" />
                   </a>
                 )}
-                <a href={`https://wa.me/${user.whatsapp || '5597984094999'}`} target="_blank" className="p-3 bg-green-500 text-white rounded-xl hover:scale-110 transition-transform shadow-lg shadow-green-100">
+                <a href={`https://wa.me/${user.whatsapp || settings?.default_phone}`} target="_blank" className="p-3 bg-green-500 text-white rounded-xl hover:scale-110 transition-transform shadow-lg shadow-green-100">
                   <MessageCircle className="w-5 h-5" />
                 </a>
                 {user.facebook && (
@@ -273,7 +273,7 @@ export default function Catalog() {
               className="w-32 h-32 lg:w-44 lg:h-44 mb-4"
             >
               <img
-                src={user.profile_image || "https://omeucartao.com.br/wp-content/uploads/2024/11/Rose-256x300.png"}
+                src={user.profile_image || settings?.default_logo}
                 alt={user.display_name}
                 className="w-full h-full object-cover rounded-full border-4 shadow-xl"
                 style={{ borderColor: user.primary_color || '#003da5' }}
@@ -289,7 +289,7 @@ export default function Catalog() {
                   <Instagram className="w-5 h-5" />
                 </a>
               )}
-              <a href={`https://wa.me/${user.whatsapp || '5597984094999'}`} target="_blank" className="p-3 bg-green-500 text-white rounded-xl hover:scale-110 transition-transform shadow-lg shadow-green-100">
+              <a href={`https://wa.me/${user.whatsapp || settings?.default_phone}`} target="_blank" className="p-3 bg-green-500 text-white rounded-xl hover:scale-110 transition-transform shadow-lg shadow-green-100">
                 <MessageCircle className="w-5 h-5" />
               </a>
               {user.facebook && (

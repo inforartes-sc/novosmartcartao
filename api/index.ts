@@ -535,41 +535,82 @@ app.get('/api/public/settings', async (req, res) => {
 app.get('/:slug', async (req, res, next) => {
   const { slug } = req.params;
   
-  // Reserved keywords that shouldn't match a profile slug (system paths)
+  // Reserved system paths
   const reserved = [
     'login', 'register', 'admin', 'dashboard', 'api', 
     'assets', 'vite', '@vite', '@react-refresh', 'node_modules',
     'favicon.ico', 'robots.txt'
   ];
   
-  // Ignore internal files, paths with dots, starting with @, or reserved keywords
-  if (reserved.includes(slug.toLowerCase()) || slug.includes('.') || slug.startsWith('@')) {
+  if (slug.includes('.') || slug.startsWith('@')) {
     return next();
   }
+
+  const isReserved = reserved.includes(slug.toLowerCase());
   
   try {
-    // Use ilike for case-insensitive slug match in production
-    const { data: profile } = await supabase.from('profiles').select('*').ilike('slug', slug).single();
+    // Read index.html from dist/ (production) or project root (fallback)
+    const possiblePaths = [
+      path.join(process.cwd(), 'dist', 'index.html'),
+      path.join(process.cwd(), 'index.html')
+    ];
     
-    // Read index.html from project root
-    const indexPath = path.join(process.cwd(), 'index.html');
-    if (!fs.existsSync(indexPath)) return next();
+    let indexPath = '';
+    for (const p of possiblePaths) {
+      if (fs.existsSync(p)) {
+        indexPath = p;
+        break;
+      }
+    }
+
+    if (!indexPath) return next();
     
     let html = fs.readFileSync(indexPath, 'utf-8');
     
-    if (profile) {
-      const title = `${profile.display_name} - Smart Cartão`;
-      const description = profile.role_title || 'Meu Cartão Digital';
-      const image = profile.profile_image || profile.banner_image || 'https://smartcartao.com/og-default.png';
+    // Fallback values
+    let title = 'Smart Cartão';
+    let description = 'Crie seu cartão digital agora';
+    let image = 'https://smartcartao.com/og-default.png';
+
+    if (!isReserved) {
+      // Use ilike for case-insensitive slug match in production
+      const { data: profile } = await supabase.from('profiles').select('*').ilike('slug', slug).single();
       
-      html = html.replace('{{title}}', title)
-                 .replace('{{description}}', description)
-                 .replace('{{image}}', image);
-    } else {
-      html = html.replace('{{title}}', 'Smart Cartão')
-                 .replace('{{description}}', 'Crie seu cartão digital agora')
-                 .replace('{{image}}', 'https://smartcartao.com/og-default.png');
+      if (profile) {
+        title = `${profile.display_name} - Smart Cartão`;
+        description = profile.role_title || 'Meu Cartão Digital';
+        image = profile.profile_image || profile.banner_image || 'https://smartcartao.com/og-default.png';
+      }
     }
+    
+    // Multiple replacements in case tags appear multiple times
+    html = html.replaceAll('{{title}}', title)
+               .replaceAll('{{description}}', description)
+               .replaceAll('{{image}}', image);
+    
+    res.setHeader('Content-Type', 'text/html');
+    return res.status(200).send(html);
+  } catch (err) {
+    next();
+  }
+});
+
+// Final fallback for SPA (handles non-slug paths like /login or nested routes)
+app.get('*', (req, res, next) => {
+  // Pass API requests to specialized handlers
+  if (req.path.startsWith('/api') || req.path.includes('.')) return next();
+  
+  try {
+    const indexPath = fs.existsSync(path.join(process.cwd(), 'dist', 'index.html'))
+      ? path.join(process.cwd(), 'dist', 'index.html')
+      : path.join(process.cwd(), 'index.html');
+
+    if (!fs.existsSync(indexPath)) return next();
+
+    let html = fs.readFileSync(indexPath, 'utf-8');
+    html = html.replaceAll('{{title}}', 'Smart Cartão')
+               .replaceAll('{{description}}', 'Crie seu cartão digital agora')
+               .replaceAll('{{image}}', 'https://smartcartao.com/og-default.png');
     
     res.setHeader('Content-Type', 'text/html');
     return res.status(200).send(html);

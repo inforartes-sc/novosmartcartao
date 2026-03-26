@@ -178,7 +178,7 @@ export default function UserDashboard() {
               ) : (
                   <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 text-center">Tecnologia Smart Cartão</span>
               )}
-              <span className="text-[10px] font-black text-[#003da5] tracking-widest">{SYSTEM_VERSION}</span>
+              <span className="text-[10px] font-black text-[#003da5] tracking-widest">{settings?.system_version || SYSTEM_VERSION}</span>
             </div>
           </div>
         </div>

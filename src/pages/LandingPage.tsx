@@ -236,10 +236,10 @@ export default function LandingPage() {
       {/* Navigation */}
       <nav className="fixed w-full z-[60] transition-all duration-300 bg-white/70 backdrop-blur-2xl border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-24">
+          <div className="flex justify-between items-center h-32">
             <div className="flex items-center gap-3 cursor-pointer group" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
               {settings?.footer_logo || settings?.default_logo ? (
-                <img src={settings.footer_logo || settings.default_logo} className="h-16 sm:h-20 object-contain drop-shadow-sm" alt="Logo" />
+                <img src={settings.footer_logo || settings.default_logo} className="h-24 sm:h-28 object-contain drop-shadow-sm" alt="Logo" />
               ) : (
                 <>
                   <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-200 group-hover:rotate-6 transition-transform">

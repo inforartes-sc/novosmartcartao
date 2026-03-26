@@ -162,7 +162,7 @@ export default function MasterDashboard() {
                 <h2 className="text-sm lg:text-base font-black tracking-tight uppercase leading-none mb-1">
                   Master Panel
                 </h2>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest mt-0">Smart Cartão {SYSTEM_VERSION}</p>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest mt-0">Smart Cartão {globalSettings.system_version || SYSTEM_VERSION}</p>
               </div>
             </div>
             <button 

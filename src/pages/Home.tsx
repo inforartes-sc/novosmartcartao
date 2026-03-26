@@ -30,7 +30,8 @@ export default function Home() {
 
   const handleWhatsAppMain = () => {
     const message = encodeURIComponent(`Olá ${user.display_name}! Vim pelo seu Cartão Digital.`);
-    window.open(`https://wa.me/${user.whatsapp}?text=${message}`, '_blank');
+    const phone = user.whatsapp || settings?.default_phone;
+    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
   };
 
   const isDark = (color: string) => {
@@ -97,7 +98,7 @@ export default function Home() {
           className="relative w-48 h-48 mb-6"
         >
           <img
-            src={user.profile_image}
+            src={user.profile_image || settings?.default_logo}
             alt={user.display_name}
             className="w-full h-full object-cover rounded-full border-4 shadow-[0_10px_30px_rgba(0,0,0,0.1)]"
             style={{ borderColor: user.primary_color || '#003da5' }}

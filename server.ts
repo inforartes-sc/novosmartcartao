@@ -696,6 +696,26 @@ async function setupApp() {
 
 
 
+  // Standard SPA Routes with default metadata (Landing Page, Login, Register, etc.)
+  app.get(['/', '/login', '/register', '/plans', '/admin', '/admin/*', '/dashboard', '/dashboard/*'], async (req, res, next) => {
+    try {
+      const indexPath = path.join(process.cwd(), 'index.html');
+      if (!fs.existsSync(indexPath)) return next();
+      
+      let html = fs.readFileSync(indexPath, 'utf-8');
+      if (vite) html = await vite.transformIndexHtml('/', html);
+
+      html = html.replaceAll('{{title}}', 'Smart Cartão')
+                 .replaceAll('{{description}}', 'Crie seu cartão digital agora')
+                 .replaceAll('{{image}}', 'https://smartcartao.com/og-default.png');
+      
+      res.setHeader('Content-Type', 'text/html');
+      return res.status(200).send(html);
+    } catch (e) {
+      next();
+    }
+  });
+
   // Dynamic OG Tags for profiles (Must be AFTER API routes but BEFORE Vite/Prod fallbacks)
   app.get('/:slug', async (req, res, next) => {
     const { slug } = req.params;
@@ -708,14 +728,14 @@ async function setupApp() {
     ];
     
     // Ignore internal files, paths with dots, starting with @, or reserved keywords
-    if (reserved.includes(slug.toLowerCase()) || slug.includes('.') || slug.startsWith('@')) {
+    if (slug.includes('.') || slug.startsWith('@')) {
       return next();
     }
+
+    const isReserved = reserved.includes(slug.toLowerCase());
     
     try {
       console.log(`🔍 [SLUG-ROUTE] Serving metadata for: ${slug}`);
-      // Use ilike for case-insensitive slug match
-      const { data: profile } = await supabase.from('profiles').select('*').ilike('slug', slug).single();
       
       const indexPath = path.join(process.cwd(), 'index.html');
       if (!fs.existsSync(indexPath)) return next();
@@ -724,26 +744,31 @@ async function setupApp() {
 
       // Crucial: Injetar o Preamble do Vite usando path base '/' para garantir funcionamento local
       if (vite) {
-         console.log('⚡ Injecting Vite Preamble into the static HTML');
          html = await vite.transformIndexHtml('/', html);
-         console.log('🔍 Preamble injection check:', html.includes('__vite_plugin_react_preamble') || html.includes('@vite/client'));
       }
       
-      if (profile) {
-        console.log(`✅ Profile found: ${profile.username}`);
-        const title = `${profile.display_name} - Smart Cartão`;
-        const description = profile.role_title || 'Meu Cartão Digital';
-        const image = profile.profile_image || profile.banner_image || 'https://smartcartao.com/og-default.png';
+      // Fallback values
+      let title = 'Smart Cartão';
+      let description = 'Crie seu cartão digital agora';
+      let image = 'https://smartcartao.com/og-default.png';
+
+      if (!isReserved) {
+        // Use ilike for case-insensitive slug match
+        const { data: profile } = await supabase.from('profiles').select('*').ilike('slug', slug).single();
         
-        html = html.replace('{{title}}', title)
-                   .replace('{{description}}', description)
-                   .replace('{{image}}', image);
-      } else {
-        console.log(`🤷 Profile not found for slug: ${slug}, using fallback`);
-        html = html.replace('{{title}}', 'Smart Cartão')
-                   .replace('{{description}}', 'Crie seu cartão digital agora')
-                   .replace('{{image}}', 'https://smartcartao.com/og-default.png');
+        if (profile) {
+          console.log(`✅ Profile found: ${profile.username}`);
+          title = `${profile.display_name} - Smart Cartão`;
+          description = profile.role_title || 'Meu Cartão Digital';
+          image = profile.profile_image || profile.banner_image || 'https://smartcartao.com/og-default.png';
+        } else {
+          console.log(`🤷 Profile not found for slug: ${slug}, using fallback`);
+        }
       }
+      
+      html = html.replaceAll('{{title}}', title)
+                 .replaceAll('{{description}}', description)
+                 .replaceAll('{{image}}', image);
       
       res.setHeader('Content-Type', 'text/html');
       return res.status(200).send(html);
