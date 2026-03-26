@@ -548,7 +548,9 @@ app.get(['/', '/login', '/register', '/admin', '/admin/*', '/dashboard', '/dashb
   
   try {
     // Read index.html from dist/ (production) or project root (fallback)
+    // We look for templ.html first (our renamed index to prevent Vercel static serving)
     const possiblePaths = [
+      path.join(process.cwd(), 'dist', 'templ.html'),
       path.join(process.cwd(), 'dist', 'index.html'),
       path.join(process.cwd(), 'index.html')
     ];
