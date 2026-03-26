@@ -570,7 +570,10 @@ app.get(['/', '/login', '/register', '/admin', '/admin/*', '/dashboard', '/dashb
     // Default values for system pages
     let title = 'Smart Cartão';
     let description = 'Crie seu cartão digital agora';
-    let image = 'https://smartcartao.com/og-default.png';
+    
+    // Fetch global system settings for the default logo and footer text
+    const { data: settings } = await supabase.from('system_settings').select('*').eq('id', 1).single();
+    let image = settings?.default_logo || 'https://smartcartao.com/og-default.png';
 
     // If it looks like a profile slug, try to fetch its metadata
     if (isProfileSlug) {
@@ -579,7 +582,7 @@ app.get(['/', '/login', '/register', '/admin', '/admin/*', '/dashboard', '/dashb
       if (profile) {
         title = `${profile.display_name} - Smart Cartão`;
         description = profile.role_title || 'Meu Cartão Digital';
-        image = profile.profile_image || profile.banner_image || 'https://smartcartao.com/og-default.png';
+        image = profile.profile_image || profile.banner_image || image;
       }
     }
     
