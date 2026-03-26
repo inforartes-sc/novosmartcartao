@@ -534,16 +534,17 @@ app.get('/api/public/settings', async (req, res) => {
 // Handle all SPA routes and profile slugs with metadata injection
 app.get(['/', '/login', '/register', '/admin', '/admin/*', '/dashboard', '/dashboard/*', '/plans', '/:slug'], async (req, res, next) => {
   const { slug } = req.params;
-  const fullPath = req.path;
+  const originalUrl = req.originalUrl || req.url;
   
-  // Skip API, assets, and files with dots
-  if (fullPath.startsWith('/api') || fullPath.includes('.')) {
+  // Skip ONLY true API requests or static assets (files with dots)
+  // Note: We check originalUrl to identify what the user actually requested
+  if (originalUrl.startsWith('/api/') || (originalUrl.includes('.') && !originalUrl.startsWith('/admin/'))) {
     return next();
   }
 
   // Reserved system paths (from server.ts)
   const reservedSlugs = ['login', 'register', 'admin', 'dashboard', 'api', 'plans', 'assets', 'vite'];
-  const isProfileSlug = slug && !reservedSlugs.includes(slug.toLowerCase()) && !fullPath.includes('/', 1);
+  const isProfileSlug = slug && !reservedSlugs.includes(slug.toLowerCase()) && !originalUrl.includes('/', 1);
   
   try {
     // Read index.html from dist/ (production) or project root (fallback)
