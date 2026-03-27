@@ -37,7 +37,6 @@ export default function AdminProducts() {
     has_liberacred: false,
     has_consortium: true,
     is_highlighted: false,
-    is_new: false,
     year: '',
     price: '',
     mileage: '',
@@ -165,7 +164,6 @@ export default function AdminProducts() {
       has_liberacred: !!product.has_liberacred,
       has_consortium: product.has_consortium !== undefined ? !!product.has_consortium : true,
       is_highlighted: !!product.is_highlighted,
-      is_new: !!product.is_new,
       year: product.year || '',
       price: product.price || '',
       mileage: product.mileage || '',
@@ -200,7 +198,6 @@ export default function AdminProducts() {
       has_liberacred: !!product.has_liberacred,
       has_consortium: product.has_consortium !== undefined ? !!product.has_consortium : true,
       is_highlighted: !!product.is_highlighted,
-      is_new: !!product.is_new,
       year: product.year || '',
       price: product.price || '',
       mileage: product.mileage || '',
@@ -236,7 +233,6 @@ export default function AdminProducts() {
       has_liberacred: false,
       has_consortium: true,
       is_highlighted: false,
-      is_new: false,
       year: '',
       price: '',
       mileage: '',
@@ -971,16 +967,6 @@ export default function AdminProducts() {
                 <label htmlFor="is_active" className="text-sm font-bold text-gray-700 cursor-pointer uppercase tracking-tight">Produto Ativo (Aparece no Catálogo)</label>
               </div>
 
-              <div className="flex items-center gap-3 p-4 bg-purple-50 border border-purple-100 rounded-2xl">
-                <input
-                  type="checkbox"
-                  id="is_new"
-                  checked={formState.is_new}
-                  onChange={(e) => setFormState({ ...formState, is_new: e.target.checked })}
-                  className="w-5 h-5 text-purple-600 focus:ring-purple-500 border-gray-300 rounded-lg cursor-pointer"
-                />
-                <label htmlFor="is_new" className="text-sm font-bold text-purple-900 cursor-pointer uppercase tracking-tight">Marcar como Novidade (Slider do Topo)</label>
-              </div>
 
               <div className="flex gap-4 pt-4 sticky bottom-0 bg-white py-4 border-t border-gray-50">
                 <button
@@ -1032,7 +1018,6 @@ export default function AdminProducts() {
                   <div className="flex flex-wrap gap-1.5 mt-2.5">
                     {product.has_liberacred && <span className="text-[9px] font-black bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-lg uppercase tracking-wider">Liberacred</span>}
                     {product.is_highlighted && <span className="text-[9px] font-black bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-lg uppercase tracking-wider">Destaque</span>}
-                    {product.is_new && <span className="text-[9px] font-black bg-purple-100 text-purple-700 px-2.5 py-1 rounded-lg uppercase tracking-wider">Novidade</span>}
                   </div>
                 </div>
               </div>

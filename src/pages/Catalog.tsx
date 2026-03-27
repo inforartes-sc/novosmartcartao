@@ -6,39 +6,6 @@ import ProductCard from '../components/ProductCard';
 
 const MemoProductCard = React.memo(ProductCard);
 
-const NovidadesSlider = ({ products, onProductClick, currentIndex, onIndexChange }: { products: any[], onProductClick: (id: string | number) => void, currentIndex: number, onIndexChange: (idx: number) => void }) => {
-  return (
-    <div className="w-full h-full relative group block outline-none rounded-[inherit]">
-      <AnimatePresence mode="wait">
-        <motion.img
-          key={products[currentIndex].id}
-          src={products[currentIndex].image}
-          onClick={() => onProductClick(products[currentIndex].id)}
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -50 }}
-          transition={{ duration: 0.7, ease: "circOut" }}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 relative z-10 cursor-pointer"
-          referrerPolicy="no-referrer"
-        />
-      </AnimatePresence>
-      
-      <div className="absolute bottom-6 right-8 flex gap-2 z-20">
-        {products.map((_, i) => (
-          <button 
-            key={i} 
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onIndexChange(i);
-            }}
-            className={`h-1.5 rounded-full transition-all duration-500 pointer-events-auto ${i === currentIndex ? 'bg-gray-800 w-8 shadow-sm' : 'bg-gray-800/20 w-3 hover:bg-gray-800/40'}`} 
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
 
 export default function Catalog() {
   const { slug } = useParams();
@@ -48,7 +15,6 @@ export default function Catalog() {
   const [loading, setLoading] = useState(true);
   const [activeModalProductId, setActiveModalProductId] = useState<string | number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [heroIndex, setHeroIndex] = useState(0);
   const [selectedYear, setSelectedYear] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedCondition, setSelectedCondition] = useState('');
@@ -66,10 +32,6 @@ export default function Catalog() {
     .finally(() => setLoading(false));
   }, [slug]);
 
-  const heroProducts = React.useMemo(() => {
-    if (!data?.products) return [];
-    return data.products.filter((p: any) => p.is_new);
-  }, [data?.products]);
 
   const filteredProducts = React.useMemo(() => {
     if (!data?.products) return [];
@@ -89,14 +51,6 @@ export default function Catalog() {
     return filteredProducts.filter((p: any) => p.is_highlighted);
   }, [filteredProducts]);
 
-  useEffect(() => {
-    if (heroProducts.length <= 1) return;
-
-    const timer = setInterval(() => {
-      setHeroIndex(prev => (prev + 1) % heroProducts.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [heroProducts.length]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
   if (!data || data.error) return <div className="min-h-screen flex items-center justify-center text-red-500">Perfil não encontrado</div>;
@@ -136,15 +90,14 @@ export default function Catalog() {
       </header>
 
       <main className="max-w-7xl mx-auto px-6 pt-12 pb-20">
-        {/* Profile Info Section */}
-        {products.filter((p: any) => p.is_new).length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-12">
-            {/* Left: Profile Info */}
-            <div className="flex flex-col items-center text-center">
+        {/* Branding Section */}
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-12 mb-16 px-4">
+            {/* Profile Side */}
+            <div className="flex-1 flex flex-col items-center justify-center text-center">
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="w-32 h-32 lg:w-44 lg:h-44 mb-4"
+                className="w-32 h-32 lg:w-44 lg:h-44 mb-6 relative"
               >
                 <img
                   src={user.profile_image || settings?.default_logo}
@@ -157,8 +110,7 @@ export default function Catalog() {
               <h2 className={`text-2xl lg:text-4xl font-bold mb-1 font-heading ${textColor}`}>{user.display_name}</h2>
               <p className={`${subtitleColor} text-sm lg:text-lg mb-8 uppercase tracking-widest font-medium opacity-80`}>{user.role_title}</p>
               
-              {/* Social Icons Row */}
-              <div className="flex gap-4">
+              <div className="flex flex-wrap items-center justify-center gap-4">
                 {user.instagram && (
                   <a href={user.instagram} target="_blank" className="p-3 bg-pink-500 text-white rounded-xl hover:scale-110 transition-transform shadow-lg shadow-pink-100">
                     <Instagram className="w-5 h-5" />
@@ -173,10 +125,10 @@ export default function Catalog() {
                   </a>
                 )}
                 {(() => {
-                   const socialLinks = typeof user.social_links === 'string' ? JSON.parse(user.social_links) : (user.social_links || []);
-                   return socialLinks.map((link: any, index: number) => {
-                     const SelectedIcon = (id: string) => {
-                        switch(id) {
+                   const links = typeof user.social_links === 'string' ? JSON.parse(user.social_links) : (user.social_links || []);
+                   return links.map((link: any, index: number) => {
+                      const SelectedIcon = (iconName: string) => {
+                        switch(iconName) {
                           case 'instagram': return Instagram;
                           case 'facebook': return Facebook;
                           case 'youtube': return Youtube;
@@ -188,118 +140,58 @@ export default function Catalog() {
                           case 'map': return Map;
                           default: return Globe;
                         }
-                     };
-                     const Icon = SelectedIcon(link.icon);
-                     return (
-                       <a 
-                         key={index} 
-                         href={
-                            link.icon === 'mail' ? `mailto:${link.url}` : 
-                            link.icon === 'map' ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(link.url)}` : 
-                            (link.url.startsWith('http') ? link.url : `https://${link.url}`)
-                         }
-                         target="_blank" 
-                         className="p-3 bg-gray-500 text-white rounded-xl hover:scale-110 transition-transform shadow-lg shadow-gray-100"
-                       >
-                         <Icon className="w-5 h-5" />
-                       </a>
-                     );
+                      };
+                      const getIconStyle = (iconName: string) => {
+                        switch(iconName) {
+                          case 'instagram': return "bg-pink-500 shadow-pink-100";
+                          case 'facebook': return "bg-blue-600 shadow-blue-100";
+                          case 'whatsapp': return "bg-green-500 shadow-green-100";
+                          case 'mail': return "bg-gray-600 shadow-gray-100";
+                          case 'phone': return "bg-blue-500 shadow-blue-100";
+                          case 'youtube': return "bg-red-600 shadow-red-100";
+                          case 'tiktok': return "bg-black shadow-gray-200";
+                          default: return "bg-gray-500 shadow-gray-100";
+                        }
+                      };
+                      const iconStyle = getIconStyle(link.icon);
+                      const Icon = SelectedIcon(link.icon);
+                      return (
+                        <a 
+                          key={index} 
+                          href={
+                             link.icon === 'mail' ? `mailto:${link.url}` : 
+                             link.icon === 'map' ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(link.url)}` : 
+                             (link.url.startsWith('http') ? link.url : `https://${link.url}`)
+                          }
+                          target="_blank" 
+                          className={`p-3 text-white rounded-xl hover:scale-110 transition-transform shadow-lg ${iconStyle}`}
+                        >
+                          <Icon className="w-5 h-5" />
+                        </a>
+                      );
                    });
                 })()}
               </div>
             </div>
 
-            {/* Mobile: Novidades Slider */}
-            <div className="lg:hidden w-full mt-8">
-              <div className="relative w-full aspect-[4/3] rounded-[2rem] overflow-hidden shadow-lg border border-gray-100 mb-4">
-                <div className="absolute top-4 left-4 z-30 pointer-events-none">
-                  <span className="bg-purple-600 text-white text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">Novidades</span>
-                </div>
-                <NovidadesSlider 
-                  products={products.filter((p: any) => p.is_new)} 
-                  onProductClick={(id) => setActiveModalProductId(id)}
-                  currentIndex={heroIndex}
-                  onIndexChange={(idx) => setHeroIndex(idx)}
-                />
-              </div>
-              <div className="flex justify-center mb-6 relative z-[50]">
-                <button 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const heroProducts = products.filter((p: any) => p.is_new);
-                    if (heroProducts[heroIndex]) setActiveModalProductId(heroProducts[heroIndex].id);
-                  }}
-                  className="w-full bg-white border border-gray-100 py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] text-gray-800 shadow-sm shadow-gray-100 active:scale-95 transition-all cursor-pointer pointer-events-auto"
+            {/* Static Catalog Banner (Replaces Slider) */}
+            {(user.card_background_image && user.show_catalog_banner !== false) ? (
+              <div className="flex-1 flex justify-center lg:justify-end">
+                <motion.div 
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="relative w-full max-w-2xl h-full flex items-center justify-center lg:justify-end"
                 >
-                  Ver Detalhes do Produto
-                </button>
+                  <img 
+                    src={user.card_background_image} 
+                    alt="Banner" 
+                    className="max-h-[350px] w-auto h-auto object-contain transition-transform duration-700 group-hover:scale-105"
+                    referrerPolicy="no-referrer"
+                  />
+                </motion.div>
               </div>
-            </div>
-
-            {/* Right: Novidades Slider (Desktop) */}
-            <div className="hidden lg:block w-full">
-              <div className="relative w-full aspect-[16/9] rounded-[2.5rem] overflow-hidden group">
-                <div className="absolute top-6 left-6 z-30 pointer-events-none">
-                  <span className="bg-purple-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">Novidades</span>
-                </div>
-                <NovidadesSlider 
-                  products={products.filter((p: any) => p.is_new)} 
-                  onProductClick={(id) => setActiveModalProductId(id)}
-                  currentIndex={heroIndex}
-                  onIndexChange={(idx) => setHeroIndex(idx)}
-                />
-                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[100] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto">
-                  <button 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      const heroProducts = products.filter((p: any) => p.is_new);
-                      if (heroProducts[heroIndex]) setActiveModalProductId(heroProducts[heroIndex].id);
-                    }}
-                    className="bg-white/95 backdrop-blur-md hover:bg-white text-gray-900 px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-wider shadow-2xl transition-all border border-white/50 cursor-pointer pointer-events-auto hover:scale-105 active:scale-95"
-                  >
-                    Ver Detalhes
-                  </button>
-                </div>
-              </div>
-            </div>
+            ) : null}
           </div>
-        ) : (
-          <div className="flex flex-col items-center text-center mb-12">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="w-32 h-32 lg:w-44 lg:h-44 mb-4"
-            >
-              <img
-                src={user.profile_image || settings?.default_logo}
-                alt={user.display_name}
-                className="w-full h-full object-cover rounded-full border-4 shadow-xl"
-                style={{ borderColor: user.primary_color || '#003da5' }}
-                referrerPolicy="no-referrer"
-              />
-            </motion.div>
-            <h2 className={`text-2xl lg:text-4xl font-bold mb-1 font-heading ${textColor}`}>{user.display_name}</h2>
-            <p className={`${subtitleColor} text-sm lg:text-lg mb-8 uppercase tracking-widest font-medium opacity-80`}>{user.role_title}</p>
-            
-            <div className="flex gap-4">
-              {user.instagram && (
-                <a href={user.instagram} target="_blank" className="p-3 bg-pink-500 text-white rounded-xl hover:scale-110 transition-transform shadow-lg shadow-pink-100">
-                  <Instagram className="w-5 h-5" />
-                </a>
-              )}
-              <a href={`https://wa.me/${user.whatsapp || settings?.default_phone}`} target="_blank" className="p-3 bg-green-500 text-white rounded-xl hover:scale-110 transition-transform shadow-lg shadow-green-100">
-                <MessageCircle className="w-5 h-5" />
-              </a>
-              {user.facebook && (
-                <a href={user.facebook} target="_blank" className="p-3 bg-blue-600 text-white rounded-xl hover:scale-110 transition-transform shadow-lg shadow-blue-100">
-                  <Facebook className="w-5 h-5" />
-                </a>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* Search & Filter Bar */}
         <div className="max-w-6xl mx-auto mb-12">

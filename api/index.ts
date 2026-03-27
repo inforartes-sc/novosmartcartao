@@ -158,6 +158,7 @@ app.post('/api/auth/logout', (req, res) => {
 // authenticateMaster moved to top
 
 app.get('/api/me', authenticate, async (req: any, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', req.user.id).single();
   if (error) return res.status(404).json({ error: 'Perfil não encontrado' });
   
@@ -181,7 +182,7 @@ app.get('/api/me', authenticate, async (req: any, res) => {
 });
 
 app.put('/api/me', authenticate, async (req: any, res) => {
-  const fields = ['display_name', 'establishment', 'role_title', 'profile_image', 'card_bottom_image', 'card_background_image', 'footer_text', 'primary_color', 'background_color', 'social_links', 'marquee_text', 'show_marquee', 'marquee_speed', 'whatsapp', 'instagram', 'facebook'];
+  const fields = ['display_name', 'establishment', 'role_title', 'profile_image', 'card_bottom_image', 'card_background_image', 'profile_banner_image', 'show_catalog_banner', 'show_profile_banner', 'footer_text', 'primary_color', 'background_color', 'social_links', 'marquee_text', 'show_marquee', 'marquee_speed', 'whatsapp', 'instagram', 'facebook'];
   const updateData: any = {};
   fields.forEach(f => { if (req.body[f] !== undefined) updateData[f] = req.body[f]; });
   
@@ -202,6 +203,7 @@ app.post('/api/auth/change-password', authenticate, async (req: any, res) => {
 });
 
 app.get('/api/profile/:slug', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   const { data: profile, error: profileError } = await supabase.from('profiles').select('*').eq('slug', req.params.slug).single();
   if (profileError || !profile) return res.status(404).json({ error: 'Perfil não encontrado' });
   
@@ -532,8 +534,9 @@ app.get('/api/public/settings', async (req, res) => {
 });
 
 // Handle all SPA routes and profile slugs with metadata injection
-app.get(['/', '/login', '/register', '/admin', '/admin/*', '/dashboard', '/dashboard/*', '/plans', '/:slug'], async (req, res, next) => {
-  const { slug } = req.params;
+app.get(['/', '/login', '/register', '/admin', '/admin/*', '/dashboard', '/dashboard/*', '/plans', '/:slug', '/:slug/catalogo'], async (req, res, next) => {
+  let { slug } = req.params;
+  const isCatalog = req.path.endsWith('/catalogo');
   const originalUrl = req.originalUrl || req.url;
   
   // Skip ONLY true API requests or static assets (files with dots)
@@ -580,9 +583,9 @@ app.get(['/', '/login', '/register', '/admin', '/admin/*', '/dashboard', '/dashb
       const { data: profile } = await supabase.from('profiles').select('*').ilike('slug', slug).single();
       
       if (profile) {
-        title = `${profile.display_name} - Smart Cartão`;
+        title = isCatalog ? `Catálogo | ${profile.display_name}` : `${profile.display_name} - Smart Cartão`;
         description = profile.role_title || 'Meu Cartão Digital';
-        image = profile.profile_image || profile.banner_image || image;
+        image = profile.profile_image || profile.profile_banner_image || profile.card_background_image || image;
       }
     }
     

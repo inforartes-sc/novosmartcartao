@@ -54,7 +54,8 @@ async function optimizeImage(file: File): Promise<Blob | File> {
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
 
-        // Exportar como JPEG com qualidade 0.7 para economizar espaço
+        // Exportar preservando transparência se necessário
+        const outputType = ['image/png', 'image/webp', 'image/gif'].includes(file.type) ? file.type : 'image/jpeg';
         canvas.toBlob(
           (blob) => {
             if (blob) {
@@ -63,8 +64,8 @@ async function optimizeImage(file: File): Promise<Blob | File> {
               resolve(file);
             }
           },
-          'image/jpeg',
-          0.7
+          outputType,
+          outputType === 'image/jpeg' ? 0.7 : undefined
         );
       };
       img.onerror = () => resolve(file);
@@ -82,7 +83,8 @@ export async function uploadImage(file: File, bucket: string = 'images') {
   // 2. Otimizar imagem
   const processedFile = await optimizeImage(file);
 
-  const fileExt = 'jpg'; // Forçamos JPG após a otimização
+  const fileType = (processedFile as Blob).type || file.type;
+  const fileExt = fileType.split('/')[1] || 'jpg';
   const fileName = `upload-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`;
   const filePath = `${fileName}`;
 
@@ -90,7 +92,7 @@ export async function uploadImage(file: File, bucket: string = 'images') {
     .from(bucket)
     .upload(filePath, processedFile, {
       upsert: true,
-      contentType: 'image/jpeg'
+      contentType: fileType
     });
 
   if (error) {

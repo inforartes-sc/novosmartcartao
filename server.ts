@@ -220,6 +220,7 @@ async function setupApp() {
   });
 
   app.get('/api/me', authenticate, async (req: any, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', req.user.id).single();
     if (error) return res.status(404).json({ error: 'Perfil não encontrado' });
     
@@ -242,10 +243,10 @@ async function setupApp() {
   });
 
   app.put('/api/me', authenticate, async (req: any, res) => {
-    const { display_name, establishment, role_title, profile_image, card_bottom_image, footer_text, primary_color, background_color, social_links, marquee_text, show_marquee, marquee_speed, whatsapp, instagram, facebook } = req.body;
+    const { display_name, establishment, role_title, profile_image, card_bottom_image, card_background_image, profile_banner_image, show_catalog_banner, show_profile_banner, footer_text, primary_color, background_color, social_links, marquee_text, show_marquee, marquee_speed, whatsapp, instagram, facebook } = req.body;
     const { error } = await supabase
       .from('profiles')
-      .update({ display_name, establishment, role_title, profile_image, card_bottom_image, footer_text, primary_color, background_color, social_links, marquee_text, show_marquee, marquee_speed, whatsapp, instagram, facebook })
+      .update({ display_name, establishment, role_title, profile_image, card_bottom_image, card_background_image, profile_banner_image, show_catalog_banner, show_profile_banner, footer_text, primary_color, background_color, social_links, marquee_text, show_marquee, marquee_speed, whatsapp, instagram, facebook })
       .eq('id', req.user.id);
     if (error) return res.status(400).json({ error: error.message });
     res.json({ success: true });
@@ -539,6 +540,7 @@ async function setupApp() {
 
   // Public Profile Route
   app.get('/api/profile/:slug', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
@@ -717,8 +719,9 @@ async function setupApp() {
   });
 
   // Dynamic OG Tags for profiles (Must be AFTER API routes but BEFORE Vite/Prod fallbacks)
-  app.get('/:slug', async (req, res, next) => {
+  app.get(['/:slug', '/:slug/catalogo'], async (req, res, next) => {
     const { slug } = req.params;
+    const isCatalog = req.path.endsWith('/catalogo');
     
     // Reserved keywords that shouldn't match a profile slug (system paths)
     const reserved = [
@@ -758,9 +761,9 @@ async function setupApp() {
         
         if (profile) {
           console.log(`✅ Profile found: ${profile.username}`);
-          title = `${profile.display_name} - Smart Cartão`;
+          title = isCatalog ? `Catálogo | ${profile.display_name}` : `${profile.display_name} - Smart Cartão`;
           description = profile.role_title || 'Meu Cartão Digital';
-          image = profile.profile_image || profile.banner_image || 'https://smartcartao.com/og-default.png';
+          image = profile.profile_image || profile.profile_banner_image || profile.card_background_image || image;
         } else {
           console.log(`🤷 Profile not found for slug: ${slug}, using fallback`);
         }

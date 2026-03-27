@@ -89,8 +89,23 @@ export default function Home() {
           </motion.div>
         )}
       </div>
+      {(user.profile_banner_image || user.card_background_image) && user.show_profile_banner !== false && (
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full h-48 md:h-64 overflow-hidden relative"
+        >
+          <img 
+            src={user.profile_banner_image || user.card_background_image} 
+            alt="Banner" 
+            className="w-full h-full object-cover"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+        </motion.div>
+      )}
 
-      <main className="w-full max-w-xl px-6 pt-12 flex flex-col items-center text-center relative z-10">
+      <main className={`w-full max-w-xl px-6 flex flex-col items-center text-center relative z-10 ${(user.profile_banner_image || user.card_background_image) && user.show_profile_banner !== false ? '-mt-24' : 'pt-12'}`}>
         {/* Profile Image */}
         <motion.div
           initial={{ opacity: 0, scale: 0.5 }}

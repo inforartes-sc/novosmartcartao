@@ -26,7 +26,10 @@ export default function AdminProfile({ user, onUpdate }: AdminProfileProps) {
     ...user,
     social_links: typeof user.social_links === 'string' ? JSON.parse(user.social_links) : (user.social_links || []),
     show_marquee: user.show_marquee !== undefined ? !!user.show_marquee : true,
-    marquee_speed: user.marquee_speed || 20
+    marquee_speed: user.marquee_speed || 20,
+    show_catalog_banner: user.show_catalog_banner !== undefined ? !!user.show_catalog_banner : false,
+    show_profile_banner: user.show_profile_banner !== undefined ? !!user.show_profile_banner : false,
+    profile_banner_image: user.profile_banner_image || '',
   });
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -51,7 +54,7 @@ export default function AdminProfile({ user, onUpdate }: AdminProfileProps) {
     setFormData({ ...formData, social_links: newList });
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'profile_image' | 'card_bottom_image' = 'profile_image') => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'profile_image' | 'card_bottom_image' | 'card_background_image' | 'profile_banner_image' = 'profile_image') => {
     try {
       if (!e.target.files || e.target.files.length === 0) return;
       setUploading(true);
@@ -307,6 +310,66 @@ export default function AdminProfile({ user, onUpdate }: AdminProfileProps) {
               </label>
             </div>
             <p className="text-[11px] text-gray-400 mt-2 italic px-1">Esta imagem substitui o veículo padrão que aparece no final do seu cartão digital.</p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-gray-700 font-bold uppercase tracking-tight text-[#003da5]">Banner Superior do Catálogo</label>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-gray-400 uppercase">{formData.show_catalog_banner ? 'Ativado' : 'Desativado'}</span>
+                <input
+                  type="checkbox"
+                  checked={formData.show_catalog_banner}
+                  onChange={(e) => setFormData({ ...formData, show_catalog_banner: e.target.checked })}
+                  className="w-10 h-5 bg-gray-200 rounded-full appearance-none checked:bg-blue-600 transition-all cursor-pointer relative before:content-[''] before:absolute before:w-4 before:h-4 before:bg-white before:rounded-full before:top-0.5 before:left-0.5 checked:before:left-5.5 before:transition-all shadow-inner"
+                />
+              </div>
+            </div>
+            <div className="relative h-48 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center overflow-hidden group">
+              {formData.card_background_image ? (
+                <img src={formData.card_background_image} className="w-full h-full object-contain p-4" alt="Catalog Banner" />
+              ) : (
+                <div className="text-center text-gray-400">
+                  <Plus className="w-10 h-10 mx-auto mb-2 opacity-20" />
+                  <p className="text-xs">Adicionar Banner do Catálogo</p>
+                </div>
+              )}
+              <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white cursor-pointer transition-opacity">
+                <span className="bg-white/20 px-4 py-2 rounded-full font-bold text-sm backdrop-blur-md">Alterar Banner</span>
+                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'card_background_image')} />
+              </label>
+            </div>
+            <p className="text-[11px] text-gray-400 mt-1 italic px-1">Aparece no topo do seu catálogo de produtos.</p>
+          </div>
+
+          <div className="pt-4 border-t border-gray-100 space-y-4">
+             <div className="flex items-center justify-between mb-4">
+              <label className="block text-sm font-medium text-gray-700 font-bold uppercase tracking-tight text-[#003da5]">Banner na Página de Perfil</label>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-gray-400 uppercase">{formData.show_profile_banner ? 'Ativado' : 'Desativado'}</span>
+                <input
+                  type="checkbox"
+                  checked={formData.show_profile_banner}
+                  onChange={(e) => setFormData({ ...formData, show_profile_banner: e.target.checked })}
+                  className="w-10 h-5 bg-gray-200 rounded-full appearance-none checked:bg-blue-600 transition-all cursor-pointer relative before:content-[''] before:absolute before:w-4 before:h-4 before:bg-white before:rounded-full before:top-0.5 before:left-0.5 checked:before:left-5.5 before:transition-all shadow-inner"
+                />
+              </div>
+            </div>
+            <div className="relative h-48 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center overflow-hidden group">
+              {formData.profile_banner_image ? (
+                <img src={formData.profile_banner_image} className="w-full h-full object-contain p-4" alt="Profile Page Banner" />
+              ) : (
+                <div className="text-center text-gray-400">
+                  <Plus className="w-10 h-10 mx-auto mb-2 opacity-20" />
+                  <p className="text-xs">Adicionar Banner Específico do Perfil</p>
+                </div>
+              )}
+              <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white cursor-pointer transition-opacity">
+                <span className="bg-white/20 px-4 py-2 rounded-full font-bold text-sm backdrop-blur-md">Alterar Banner</span>
+                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'profile_banner_image')} />
+              </label>
+            </div>
+            <p className="text-[11px] text-gray-400 mt-1 italic px-1">Se não definido, usará o mesmo banner do catálogo. Aparece no topo do seu cartão digital pessoal.</p>
           </div>
           <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 space-y-4">
             <div className="flex items-center justify-between">
