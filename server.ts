@@ -32,11 +32,17 @@ const VIEW_COOLDOWN = 60 * 60 * 1000; // 1 hour
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-// Webhook Debug Cache (Last 10 events)
-export const webhookLogs: any[] = [];
-const addWebhookLog = (data: any) => {
-  webhookLogs.unshift({ timestamp: new Date().toISOString(), ...data });
-  if (webhookLogs.length > 20) webhookLogs.pop();
+// Webhook Debug Logger (Persisted in Supabase)
+const addWebhookLog = async (data: any) => {
+  try {
+    await supabase.from('webhook_logs').insert([{
+      event: data.event,
+      payload: data.body,
+      headers: data.headers
+    }]);
+  } catch (err) {
+    console.error('[DEBUG-LOG] Failed to save webhook log:', err);
+  }
 };
 
 app.use(express.json({ limit: '5mb' }));
@@ -171,9 +177,11 @@ async function setupApp() {
     res.json(data);
   });
 
-  // Webhook Debug Route
-  app.get('/api/webhooks/debug', authenticateMaster, (req, res) => {
-    res.json(webhookLogs);
+  // Webhook Debug Route (Persistent)
+  app.get('/api/webhooks/debug', authenticateMaster, async (req, res) => {
+    const { data, error } = await supabase.from('webhook_logs').select('*').order('created_at', { ascending: false }).limit(20);
+    if (error) return res.status(400).json({ error: error.message });
+    res.json(data);
   });
 
   // Webhook for Payment Confirmation (to be called by external system)
