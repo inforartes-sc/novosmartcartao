@@ -1086,13 +1086,13 @@ export default function LandingPage() {
                     </div>
                  </div>
 
-                 <div className="flex flex-col items-center gap-4 p-6 bg-white rounded-[2rem] border border-slate-200 shadow-sm w-full">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center">Gestão Financeira</p>
+                 <div className="flex flex-col items-center gap-2 px-6 py-4 bg-white rounded-[2rem] border border-slate-200 shadow-sm w-full">
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 text-center">Gestão Financeira</p>
                     <div className="w-full flex items-center justify-center">
                        <img 
                          src="https://vdbdxfdjkycppdpbexri.supabase.co/storage/v1/object/public/logos/company-logos/ab4841d3-bcce-4621-b2c8-bcb4630f6619-0.4108661170281831.png" 
                          alt="PagixyPay" 
-                         className="w-full max-h-14 object-contain" 
+                         className="w-full max-h-11 object-contain" 
                        />
                     </div>
                  </div>
