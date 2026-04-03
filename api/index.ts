@@ -50,6 +50,13 @@ const authenticateMaster = async (req: any, res: any, next: any) => {
   }
 };
 
+// Webhook Debug Cache (Last 20 events)
+const webhookLogs: any[] = [];
+const addWebhookLog = (data: any) => {
+  webhookLogs.unshift({ timestamp: new Date().toISOString(), ...data });
+  if (webhookLogs.length > 20) webhookLogs.pop();
+};
+
 const app = express();
 app.use(express.json({ limit: '5mb' }));
 app.use(cookieParser());
@@ -110,15 +117,18 @@ app.get('/api/faturas', authenticate, async (req: any, res) => {
   res.json(data);
 });
 
+// Webhook Debug Route
+app.get('/api/webhooks/debug', authenticateMaster, (req, res) => {
+  res.json(webhookLogs);
+});
+
 // Webhook for Payment Confirmation (to be called by external system)
 app.post('/api/webhooks/payments', async (req, res) => {
-  const { user_id, status, months, plan_id, plan_name, event, invoice } = req.body;
+  const { user_id, status, months, plan_id, plan_name, event, invoice, client } = req.body;
   const apiKey = req.headers['x-api-key'];
 
   console.log(`[WEBHOOK] Received event: ${event || status} from PagiXyPay`);
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('[WEBHOOK-PAYLOAD]:', JSON.stringify(req.body, null, 2));
-  }
+  addWebhookLog({ event: event || status, body: req.body, headers: req.headers });
 
   if (apiKey !== process.env.OTHER_SYSTEM_API_KEY) {
     console.warn('[WEBHOOK] Unauthorized API Key attempt');
@@ -128,8 +138,12 @@ app.post('/api/webhooks/payments', async (req, res) => {
   // Handle PagixyPay new format
   if (event) {
     if (event === 'invoice.created' && invoice) {
-      // Try multiple fields for user identification
-      const final_user_id = invoice.smartcartao_user_id || invoice.external_reference || invoice.user_id;
+      // Try multiple fields for user identification (Invoice level or Client level)
+      const final_user_id = invoice.smartcartao_user_id || 
+                          invoice.external_reference || 
+                          invoice.user_id || 
+                          client?.external_id || 
+                          client?.id;
       
       if (!final_user_id) {
         console.warn('[WEBHOOK-PAGIXY] No user ID found in invoice payload');
@@ -137,11 +151,14 @@ app.post('/api/webhooks/payments', async (req, res) => {
       }
 
       console.log(`[WEBHOOK-PAGIXY] Creating invoice for user ${final_user_id}`);
+      // Ensure values are clean
+      const amount = String(invoice.amount).replace('R$', '').replace(' ', '').replace(',', '.').trim();
+
       const { error } = await supabase.from('faturas').insert([{
         user_id: final_user_id,
-        amount: String(invoice.amount).replace('R$', '').trim(),
+        amount: amount,
         due_date: invoice.due_date,
-        payment_link: invoice.payment_link || invoice.url,
+        payment_link: invoice.payment_link || invoice.url || invoice.checkout_url,
         status: 'pending'
       }]);
       
@@ -153,7 +170,11 @@ app.post('/api/webhooks/payments', async (req, res) => {
     }
 
     if (event === 'payment.received') {
-      const final_user_id = invoice?.external_reference || invoice?.smartcartao_user_id || invoice?.user_id;
+      const final_user_id = invoice?.external_reference || 
+                          invoice?.smartcartao_user_id || 
+                          invoice?.user_id || 
+                          client?.external_id;
+                          
       if (!final_user_id) return res.status(400).json({ error: 'User ID not found in payload' });
 
       const { data: profile } = await supabase.from('profiles').select('expiry_date, plan_id').eq('id', final_user_id).single();
@@ -180,7 +201,7 @@ app.post('/api/webhooks/payments', async (req, res) => {
       // Update fatura status
       await supabase.from('faturas').update({ status: 'paid' }).eq('user_id', final_user_id).eq('status', 'pending');
 
-      console.log(`[WEBHOOK] Payment confirmed for user ${final_user_id}. Access extended to ${newDate.toISOString().split('T')[0]}`);
+      console.log(`[WEBHOOK] Payment confirmed for user ${final_user_id}. Access extended.`);
       return res.json({ success: true, message: 'Payment confirmed and access extended' });
     }
   }
