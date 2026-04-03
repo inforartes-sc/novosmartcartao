@@ -1086,7 +1086,7 @@ export default function LandingPage() {
                     </div>
                  </div>
 
-                 <div className="flex flex-col items-center gap-2 px-6 py-4 bg-white rounded-[2rem] border border-slate-200 shadow-sm w-full">
+                 <div className="flex flex-col items-center gap-2 px-6 py-4 bg-white rounded-2xl border border-slate-200 shadow-sm w-full">
                     <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 text-center">Gestão Financeira</p>
                     <div className="w-full flex items-center justify-center">
                        <img 
