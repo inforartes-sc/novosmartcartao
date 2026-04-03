@@ -1086,13 +1086,14 @@ export default function LandingPage() {
                     </div>
                  </div>
 
-                 <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-200 shadow-sm">
-                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
-                       <img src="https://vdbdxfdjkycppdpbexri.supabase.co/storage/v1/object/public/logos/company-logos/ab4841d3-bcce-4621-b2c8-bcb4630f6619-0.4108661170281831.png" alt="PagixyPay" className="h-7 w-auto object-contain" />
-                    </div>
-                    <div>
-                       <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Plataforma Financeira</p>
-                       <p className="text-xs font-black uppercase tracking-tight text-slate-800">PagixyPay</p>
+                 <div className="flex flex-col items-center gap-4 p-6 bg-white rounded-[2rem] border border-slate-200 shadow-sm w-full">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center">Este site utiliza gestão financeira</p>
+                    <div className="w-full flex items-center justify-center">
+                       <img 
+                         src="https://vdbdxfdjkycppdpbexri.supabase.co/storage/v1/object/public/logos/company-logos/ab4841d3-bcce-4621-b2c8-bcb4630f6619-0.4108661170281831.png" 
+                         alt="PagixyPay" 
+                         className="w-full max-h-14 object-contain" 
+                       />
                     </div>
                  </div>
                </div>
