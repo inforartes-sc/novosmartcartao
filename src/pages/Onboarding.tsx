@@ -19,7 +19,9 @@ import {
   Lock,
   Globe,
   Briefcase,
-  Fingerprint
+  Fingerprint,
+  MousePointer,
+  Package
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -30,6 +32,7 @@ export default function Onboarding() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [settings, setSettings] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     client_name: '',
@@ -47,6 +50,13 @@ export default function Onboarding() {
     client_logo_url: '',
     niche: niche
   });
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(d => setSettings(d))
+      .catch(() => {});
+  }, []);
 
   const isRealEstate = niche === 'realestate';
 
@@ -92,28 +102,45 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0b] text-white flex flex-col items-center justify-center p-4 selection:bg-blue-500/30 overflow-x-hidden">
-      {/* Background blobs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full animate-pulse" />
-        <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-purple-600/10 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
-      </div>
+    <div 
+      className="min-h-screen bg-cover bg-center flex items-center justify-center p-6 relative overflow-hidden font-sans"
+      style={{ backgroundImage: 'url("/login-bg.png")' }}
+    >
+      <div className="absolute inset-0 bg-slate-900/20"></div>
 
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-2xl relative z-10"
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-2xl bg-white/95 backdrop-blur-md rounded-[32px] border border-white/40 shadow-2xl relative z-10 overflow-hidden"
       >
-        {/* Logo/Brand Section */}
-        <div className="flex flex-col items-center mb-10">
-          <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-blue-400 rounded-2xl flex items-center justify-center shadow-2xl shadow-blue-500/20 mb-4">
-            <Layout className="w-8 h-8 text-white" />
+        <div className="p-8 md:p-12">
+          <div className="text-center mb-10">
+            {(settings?.footer_logo || settings?.default_logo) ? (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex justify-center mb-6"
+              >
+                <img 
+                  src={settings.footer_logo || settings.default_logo} 
+                  alt="Logo" 
+                  className="max-h-20 w-auto object-contain"
+                  referrerPolicy="no-referrer"
+                />
+              </motion.div>
+            ) : (
+              <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/20">
+                <Layout className="w-8 h-8 text-white" />
+              </div>
+            )}
+            <h1 className="text-3xl font-black tracking-tight text-center mb-2 text-gray-900">
+              Smart <span className="text-blue-500">Cartão</span>
+            </h1>
+            <div className="h-1 w-12 bg-blue-500 rounded-full mx-auto" />
           </div>
-          <h1 className="text-3xl font-black tracking-tight text-center mb-2">
-            Smart <span className="text-blue-500">Cartão</span>
-          </h1>
-          <div className="h-1 w-12 bg-blue-500 rounded-full" />
-        </div>
 
         <AnimatePresence mode="wait">
           {step === 1 && (
@@ -122,19 +149,19 @@ export default function Onboarding() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white/5 backdrop-blur-2xl p-10 lg:p-14 rounded-[3rem] border border-white/10 shadow-3xl text-center relative overflow-hidden"
+              className="text-center"
             >
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
-              
-              <div className="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce transition-all">
+              <div className="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce">
                 {isRealEstate ? (
                   <Home className="w-10 h-10 text-blue-500" />
                 ) : (
                   <Car className="w-10 h-10 text-blue-500" />
                 )}
               </div>
-              <h2 className="text-3xl font-black mb-6 tracking-tight">Vamos começar seu <br /> sucesso digital?</h2>
-              <p className="text-gray-400 leading-relaxed max-w-sm mx-auto mb-10 font-medium">
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight leading-tight">
+                Vamos começar seu sucesso digital?
+              </h1>
+              <p className="text-gray-500 mt-4 text-lg mb-10">
                 Siga este breve onboarding para configurarmos sua plataforma profissional {isRealEstate ? 'imobiliária' : 'automotiva'}.
               </p>
               <button 
@@ -153,39 +180,26 @@ export default function Onboarding() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -30 }}
-              className="bg-white/5 backdrop-blur-2xl p-8 lg:p-12 rounded-[3.5rem] border border-white/10 shadow-3xl overflow-y-auto max-h-[85vh] scrollbar-thin"
             >
-              <div className="mb-10 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-2 block">Cadastro Completo</span>
-                  <h2 className="text-3xl font-black tracking-tight">Informações Pessoais</h2>
-                </div>
-                <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-blue-500 font-black">
-                  1/1
-                </div>
-              </div>
-
               <form onSubmit={handleSubmit} className="space-y-8">
-                {/* Logo Upload Section */}
-                <div className="flex flex-col items-center p-6 bg-white/5 border border-dashed border-white/20 rounded-[2.5rem] relative group hover:border-blue-500 transition-all">
-                  <div className="w-24 h-24 rounded-full overflow-hidden mb-4 border-2 border-white/10 group-hover:border-blue-500/50 bg-black/40 flex items-center justify-center">
+                <div className="flex flex-col items-center p-6 bg-gray-50 border border-dashed border-gray-200 rounded-[2.5rem] relative group hover:border-blue-500 transition-all">
+                  <div className="w-24 h-24 rounded-full overflow-hidden mb-4 border-2 border-gray-200 group-hover:border-blue-500/50 bg-white flex items-center justify-center">
                     {logoPreview ? (
                       <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
                     ) : (
-                      <Camera className="w-8 h-8 text-white/30" />
+                      <Camera className="w-8 h-8 text-gray-300" />
                     )}
                   </div>
                   <label className="cursor-pointer">
-                    <span className="text-xs font-black uppercase text-blue-500 tracking-widest hover:text-blue-400">Inserir Logotipo</span>
+                    <span className="text-xs font-black uppercase text-blue-600 tracking-widest hover:text-blue-500">Inserir Logotipo</span>
                     <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
                   </label>
-                  <p className="text-[10px] text-gray-500 mt-2 font-bold uppercase tracking-tighter">Imagem Recomendada: Quadrada (Ex: 512x512)</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase ml-2 flex items-center gap-2 tracking-widest">
-                      <User className="w-3.5 h-3.5 text-blue-500" /> Nome Completo
+                    <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                      <User className="w-3.5 h-3.5 text-blue-600" /> Nome Completo
                     </label>
                     <input 
                       required
@@ -193,12 +207,12 @@ export default function Onboarding() {
                       placeholder="Como deseja ser chamado?"
                       value={formData.client_name}
                       onChange={e => setFormData({...formData, client_name: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all placeholder:text-gray-600 font-medium"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all placeholder:text-gray-400 text-gray-800 font-medium"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase ml-2 flex items-center gap-2 tracking-widest">
-                      <Fingerprint className="w-3.5 h-3.5 text-blue-500" /> CPF / CNPJ
+                    <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                      <Fingerprint className="w-3.5 h-3.5 text-blue-600" /> CPF / CNPJ
                     </label>
                     <input 
                       required
@@ -206,15 +220,15 @@ export default function Onboarding() {
                       placeholder="Doc. para o sistema"
                       value={formData.client_document}
                       onChange={e => setFormData({...formData, client_document: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all placeholder:text-gray-600 font-medium"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all placeholder:text-gray-400 text-gray-800 font-medium"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-white/5 mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase ml-2 flex items-center gap-2 tracking-widest">
-                      <Globe className="w-3.5 h-3.5 text-blue-500" /> Link Desejado (Slug)
+                    <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                      <Globe className="w-3.5 h-3.5 text-blue-600" /> Link Desejado (Slug)
                     </label>
                     <input 
                       required
@@ -222,12 +236,12 @@ export default function Onboarding() {
                       placeholder="Ex: nova.era.veiculos"
                       value={formData.suggested_username}
                       onChange={e => setFormData({...formData, suggested_username: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all placeholder:text-gray-600 font-medium"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all placeholder:text-gray-400 text-gray-800 font-medium"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase ml-2 flex items-center gap-2 tracking-widest">
-                      <Mail className="w-3.5 h-3.5 text-blue-500" /> E-mail de Contato
+                    <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                      <Mail className="w-3.5 h-3.5 text-blue-600" /> E-mail de Contato
                     </label>
                     <input 
                       required
@@ -235,15 +249,15 @@ export default function Onboarding() {
                       placeholder="email@exemplo.com"
                       value={formData.client_email}
                       onChange={e => setFormData({...formData, client_email: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all placeholder:text-gray-600 font-medium"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all placeholder:text-gray-400 text-gray-800 font-medium"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase ml-2 flex items-center gap-2 tracking-widest">
-                      <Phone className="w-3.5 h-3.5 text-blue-500" /> WhatsApp
+                    <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                      <Phone className="w-3.5 h-3.5 text-blue-600" /> WhatsApp
                     </label>
                     <input 
                       required
@@ -251,106 +265,77 @@ export default function Onboarding() {
                       placeholder="(00) 00000-0000"
                       value={formData.client_whatsapp}
                       onChange={e => setFormData({...formData, client_whatsapp: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all placeholder:text-gray-600 font-medium"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all placeholder:text-gray-400 text-gray-800 font-medium"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase ml-2 flex items-center gap-2 tracking-widest">
-                      <Lock className="w-3.5 h-3.5 text-blue-500" /> Sugestão de Senha
+                    <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                      <Lock className="w-3.5 h-3.5 text-blue-600" /> Sugestão de Senha
                     </label>
                     <input 
                       type="password" 
                       placeholder="Sua senha inicial"
                       value={formData.suggested_password}
                       onChange={e => setFormData({...formData, suggested_password: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all placeholder:text-gray-600 font-medium"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all placeholder:text-gray-400 text-gray-800 font-medium"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-white/5 mt-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase ml-2 flex items-center gap-2 tracking-widest">
-                      <Layout className="w-3.5 h-3.5 text-blue-500" /> Nome da Empresa
-                    </label>
-                    <input 
-                      type="text" 
-                      placeholder={isRealEstate ? "Ex: Imobiliária Prática" : "Ex: Top Veículos"}
-                      value={formData.business_name}
-                      onChange={e => setFormData({...formData, business_name: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all placeholder:text-gray-600 font-medium"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase ml-2 flex items-center gap-2 tracking-widest">
-                      <Briefcase className="w-3.5 h-3.5 text-blue-500" /> Seu Cargo / Função
-                    </label>
-                    <input 
-                      type="text" 
-                      placeholder="Consultor, Diretor, etc."
-                      value={formData.role_title}
-                      onChange={e => setFormData({...formData, role_title: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all placeholder:text-gray-600 font-medium"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Método de Cadastro</label>
-                    <div className="grid grid-cols-1 gap-2">
-                      <button 
-                        type="button"
-                        onClick={() => setFormData({...formData, setup_type: 'self'})}
-                        className={`p-4 rounded-2xl border text-sm font-bold transition-all text-left ${
-                          formData.setup_type === 'self' 
-                          ? 'bg-blue-600 border-blue-500 text-white shadow-xl shadow-blue-500/20' 
-                          : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/30 hover:text-white'
-                        }`}
-                      >
-                        Eu mesmo cadastro
-                      </button>
-                      <button 
-                        type="button"
-                        onClick={() => setFormData({...formData, setup_type: 'admin'})}
-                        className={`p-4 rounded-2xl border text-sm font-bold transition-all text-left ${
-                          formData.setup_type === 'admin' 
-                          ? 'bg-blue-600 border-blue-500 text-white shadow-xl shadow-blue-500/20' 
-                          : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/30 hover:text-white'
-                        }`}
-                      >
-                        Quero que vocês cadastrem
-                      </button>
+                    <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                      <MousePointer className="w-3.5 h-3.5 text-blue-600" /> Método de Cadastro
+                    </label>
+                    <div className="flex gap-2">
+                      {[
+                        { type: 'self', label: 'Eu mesmo' },
+                        { type: 'admin', label: 'Vocês cadastram' }
+                      ].map(({ type, label }) => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => setFormData({...formData, setup_type: type as any})}
+                          className={`flex-1 p-4 rounded-2xl border transition-all font-semibold text-sm ${
+                            formData.setup_type === type 
+                            ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/30' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Volume de {isRealEstate ? 'Imóveis' : 'Veículos'}</label>
-                    <div className="relative group">
-                        <select 
+                    <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                      <Package className="w-3.5 h-3.5 text-blue-600" /> {isRealEstate ? 'Volume de Imóveis' : 'Volume de Veículos'}
+                    </label>
+                    <div className="relative">
+                      <select 
                         value={formData.product_estimated_count}
                         onChange={e => setFormData({...formData, product_estimated_count: e.target.value})}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all appearance-none font-bold text-sm"
-                        >
-                        <option value="1-5" className="bg-[#1a1a1a]">1 a 5 unidades</option>
-                        <option value="5-10" className="bg-[#1a1a1a]">5 a 10 unidades</option>
-                        <option value="10-20" className="bg-[#1a1a1a]">10 a 20 unidades</option>
-                        <option value="20+" className="bg-[#1a1a1a]">Mais de 20 unidades</option>
-                        </select>
-                        <Layout className="w-4 h-4 text-gray-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-gray-800 font-medium appearance-none"
+                      >
+                        <option value="1-5">1 a 5 unidades</option>
+                        <option value="5-10">5 a 10 unidades</option>
+                        <option value="10-20">10 a 20 unidades</option>
+                        <option value="20+">Mais de 20 unidades</option>
+                      </select>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-2 pt-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase ml-2 flex items-center gap-2 tracking-widest">
-                    <MessageSquare className="w-3.5 h-3.5 text-blue-500" /> Observações Importantes
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                    <MessageSquare className="w-3.5 h-3.5 text-blue-600" /> Observações Importantes
                   </label>
                   <textarea 
                     placeholder="Se algum dado ficou de fora, nos conte aqui..."
                     value={formData.additional_notes}
                     onChange={e => setFormData({...formData, additional_notes: e.target.value})}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 focus:ring-4 focus:ring-blue-500/20 outline-none h-24 resize-none transition-all font-medium"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all placeholder:text-gray-400 text-gray-800 font-medium min-h-[120px]"
                   />
                 </div>
 
