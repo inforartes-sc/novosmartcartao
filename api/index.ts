@@ -135,7 +135,18 @@ app.get('/api/admin/plans', authenticateMaster, async (req, res) => {
 });
 
 app.put('/api/admin/plans/:id', authenticateMaster, async (req, res) => {
-  const { error } = await supabase.rpc('update_plan_direct', { p_id: parseInt(req.params.id), ...req.body });
+  const { name, months, price, description, features, billing_cycle, is_popular, discount } = req.body;
+  const { error } = await supabase.rpc('update_plan_direct', { 
+    p_id: parseInt(req.params.id),
+    p_name: name,
+    p_months: months,
+    p_price: price,
+    p_description: description,
+    p_features: features,
+    p_billing_cycle: billing_cycle,
+    p_is_popular: is_popular,
+    p_discount: discount || 0
+  });
   if (error) return res.status(400).json({ error: error.message });
   res.json({ success: true });
 });
