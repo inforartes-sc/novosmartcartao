@@ -229,10 +229,170 @@ app.get('/api/me', authenticate, async (req: any, res) => {
   res.json({ ...profile, is_admin: profile?.is_admin || profile?.username === 'admin' });
 });
 
+app.put('/api/me', authenticate, async (req: any, res) => {
+  const { 
+    display_name, establishment, role_title, profile_image, card_bottom_image, 
+    card_background_image, profile_banner_image, show_catalog_banner, 
+    show_profile_banner, footer_text, primary_color, background_color, 
+    social_links, marquee_text, show_marquee, marquee_speed, 
+    whatsapp, instagram, facebook, niche 
+  } = req.body;
+  
+  const { error } = await supabase
+    .from('profiles')
+    .update({ 
+      display_name, establishment, role_title, profile_image, card_bottom_image, 
+      card_background_image, profile_banner_image, show_catalog_banner, 
+      show_profile_banner, footer_text, primary_color, background_color, 
+      social_links, marquee_text, show_marquee, marquee_speed, 
+      whatsapp, instagram, facebook, niche 
+    })
+    .eq('id', req.user.id);
+    
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ success: true });
+});
+
 // Products & Profile
 app.get('/api/products', authenticate, async (req: any, res) => {
   const { data } = await supabase.from('products').select('*').eq('user_id', req.user.id);
   res.json(data || []);
+});
+
+app.post('/api/products', authenticate, async (req: any, res: any) => {
+  const { 
+    name, image, description, colors, images, consortium_image, 
+    liberacred_image, has_liberacred, has_consortium, is_highlighted, 
+    is_new, year, price, mileage, brand, condition, fuel, 
+    transmission, color, optionals, show_consortium_plans, 
+    consortium_plans, video_url, niche, property_type, bedrooms, 
+    bathrooms, suites, parking_spaces, area, location, 
+    is_for_sale, is_for_rent, condo_fee, iptu, map_url, show_financing_plans, financing_plans, cash_price, card_installments, card_interest, is_active
+  } = req.body;
+
+  const { data, error } = await supabase
+    .from('products')
+    .insert({
+      user_id: req.user.id,
+      name,
+      image,
+      description,
+      colors: Array.isArray(colors) ? JSON.stringify(colors) : (colors || '["#000000"]'),
+      images: Array.isArray(images) ? JSON.stringify(images) : (images || '[]'),
+      consortium_image,
+      liberacred_image,
+      has_liberacred: !!has_liberacred,
+      has_consortium: has_consortium !== undefined ? !!has_consortium : true,
+      is_highlighted: !!is_highlighted,
+      is_new: !!is_new,
+      year: year || null,
+      price: price || null,
+      mileage: mileage || null,
+      brand,
+      condition,
+      fuel,
+      transmission,
+      color,
+      optionals: Array.isArray(optionals) ? JSON.stringify(optionals) : (optionals || '[]'),
+      show_consortium_plans: !!show_consortium_plans,
+      consortium_plans: Array.isArray(consortium_plans) ? JSON.stringify(consortium_plans) : (consortium_plans || '[]'),
+      show_financing_plans: !!show_financing_plans,
+      financing_plans: Array.isArray(financing_plans) ? JSON.stringify(financing_plans) : (financing_plans || '[]'),
+      cash_price: cash_price || null,
+      card_installments: card_installments || null,
+      card_interest: !!card_interest,
+      is_active: is_active !== undefined ? !!is_active : true,
+      niche: niche || 'vehicle',
+      property_type: property_type || null,
+      bedrooms: bedrooms || null,
+      bathrooms: bathrooms || null,
+      suites: suites || null,
+      parking_spaces: parking_spaces || null,
+      area: area || null,
+      location: location || null,
+      is_for_sale: is_for_sale !== undefined ? !!is_for_sale : true,
+      is_for_rent: is_for_rent !== undefined ? !!is_for_rent : false,
+      condo_fee: condo_fee || null,
+      iptu: iptu || null,
+      map_url: map_url || null,
+      video_url: video_url || null
+    })
+    .select('id')
+    .single();
+  
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ id: data.id });
+});
+
+app.put('/api/products/:id', authenticate, async (req: any, res) => {
+  const updateData: any = {};
+  const fields = [
+    'name', 'image', 'description', 'colors', 'images', 'consortium_image', 
+    'liberacred_image', 'has_liberacred', 'has_consortium', 'is_highlighted', 
+    'is_new', 'year', 'price', 'mileage', 'brand', 'condition', 'fuel', 
+    'transmission', 'color', 'optionals', 'show_consortium_plans', 
+    'consortium_plans', 'show_financing_plans', 'financing_plans',
+    'cash_price', 'card_installments', 'card_interest', 'is_active',
+    'niche', 'property_type', 'bedrooms', 'bathrooms', 'suites', 
+    'parking_spaces', 'area', 'location', 'is_for_sale', 'is_for_rent', 
+    'condo_fee', 'iptu', 'map_url', 'video_url'
+  ];
+
+  fields.forEach(field => {
+    if (req.body[field] !== undefined) {
+      if (['colors', 'images', 'optionals', 'consortium_plans', 'financing_plans'].includes(field)) {
+        updateData[field] = Array.isArray(req.body[field]) ? JSON.stringify(req.body[field]) : req.body[field];
+      } else if (['has_liberacred', 'has_consortium', 'is_highlighted', 'is_new', 'show_consortium_plans', 'show_financing_plans', 'card_interest', 'is_active', 'is_for_sale', 'is_for_rent'].includes(field)) {
+        updateData[field] = !!req.body[field];
+      } else {
+        updateData[field] = req.body[field] || null;
+      }
+    }
+  });
+
+  const { error } = await supabase
+    .from('products')
+    .update(updateData)
+    .eq('id', parseInt(req.params.id))
+    .eq('user_id', req.user.id);
+  
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ success: true });
+});
+
+app.delete('/api/products/:id', authenticate, async (req: any, res) => {
+  const { error } = await supabase
+    .from('products')
+    .delete()
+    .eq('id', parseInt(req.params.id))
+    .eq('user_id', req.user.id);
+  
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ success: true });
+});
+
+app.post('/api/products/:id/view', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { data } = await supabase.from('products').select('views').eq('id', id).single();
+    const views = (data?.views || 0) + 1;
+    await supabase.from('products').update({ views }).eq('id', id);
+    res.json({ success: true, views });
+  } catch (e) {
+    res.status(500).json({ error: 'Server error parsing views' });
+  }
+});
+
+app.post('/api/products/:id/sale', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { data } = await supabase.from('products').select('sales').eq('id', id).single();
+    const sales = (data?.sales || 0) + 1;
+    await supabase.from('products').update({ sales }).eq('id', id);
+    res.json({ success: true, sales });
+  } catch (e) {
+    res.status(500).json({ error: 'Server error parsing sales' });
+  }
 });
 
 app.get('/api/profile/:slug', async (req, res) => {
