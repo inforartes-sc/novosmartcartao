@@ -211,21 +211,52 @@ app.get('/api/me', authenticate, async (req: any, res) => {
 // Admin Stats
 app.get('/api/admin/stats', authenticateMaster, async (req, res) => {
   try {
+    // 1. Basic counts
     const userRes = await supabase.from('profiles').select('id, username, is_admin, plan_id, status, views');
     const userProfiles = userRes.data || [];
+    const userCount = userProfiles.length;
+    
+    // 2. Views
     const totalViews = userProfiles.reduce((acc, curr) => acc + (curr.views || 0), 0);
+
+    // 3. Admins vs Members
     const adminsCount = userProfiles.filter(u => u.username === 'admin' || u.is_admin === true).length;
+    const membersCount = userProfiles.length - adminsCount;
+
+    // 4. Users per Plan
+    const { data: plans } = await supabase.from('plans').select('*');
+    const planStats = (plans || []).map(p => ({
+      name: p.name,
+      count: userProfiles.filter(u => u.plan_id && Number(u.plan_id) === Number(p.id)).length
+    }));
+
+    // Add "Sem Plano" if needed
+    const noPlanCount = userProfiles.filter(u => !u.plan_id).length;
+    if (noPlanCount > 0) planStats.push({ name: 'Sem Plano', count: noPlanCount });
+
+    // 5. New users in last 30 days
+    const { data: authUsers } = await supabase.auth.admin.listUsers();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const newUsersCount = (authUsers?.users || []).filter(u => new Date(u.created_at) > thirtyDaysAgo).length;
+
+    // 6. Active vs Inactive
+    const activeCount = userProfiles.filter(u => u.status === 'active').length;
+    const inactiveCount = userProfiles.length - activeCount;
     
     res.json({ 
-      userCount: userProfiles.length, 
+      userCount, 
       totalViews,
       adminsCount,
-      membersCount: userProfiles.length - adminsCount,
-      activeCount: userProfiles.filter(u => u.status === 'active').length,
-      inactiveCount: userProfiles.filter(u => u.status !== 'active').length
+      membersCount,
+      planStats,
+      newUsersCount,
+      activeCount,
+      inactiveCount
     });
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('[STATS] Error:', err);
+    res.status(400).json({ error: `Erro nas estatísticas: ${err.message}` });
   }
 });
 
