@@ -244,7 +244,7 @@ app.get('/api/profile/:slug', async (req, res) => {
 });
 
 // Vercel SPA Metadata
-app.get(['/', '/login', '/register', '/admin', '/admin/*', '/dashboard', '/dashboard/*', '/plans', '/onboarding', '/:slug'], async (req, res, next) => {
+app.get(['/', '/login', '/register', '/admin', '/admin/*', '/dashboard', '/dashboard/*', '/plans', '/onboarding', '/:slug', '/:slug/catalogo'], async (req, res, next) => {
   if (req.url.startsWith('/api/') || req.url.includes('.')) return next();
   try {
     const paths = [path.join(process.cwd(), 'dist', 'templ.html'), path.join(process.cwd(), 'dist', 'index.html'), path.join(process.cwd(), 'index.html')];
