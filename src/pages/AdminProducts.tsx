@@ -75,8 +75,8 @@ export default function AdminProducts() {
     card_interest: true,
     is_active: true,
     niche: userNiche,
-    // Real Estate Fields
     property_type: 'Casa',
+    property_status: 'ready',
     bedrooms: '',
     bathrooms: '',
     suites: '',
@@ -94,8 +94,6 @@ export default function AdminProducts() {
   const [newPlan, setNewPlan] = useState({ installments: 0, value: '' });
   const [newFinancingPlan, setNewFinancingPlan] = useState({ down_payment: '', installments: 0, value: '' });
   const [searchTerm, setSearchTerm] = useState('');
-
-
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'image' | 'consortium_image' | 'liberacred_image') => {
     try {
@@ -218,6 +216,7 @@ export default function AdminProducts() {
       is_active: product.is_active !== false,
       niche: product.niche || 'vehicle',
       property_type: product.property_type || 'Casa',
+      property_status: product.property_status || 'ready',
       bedrooms: product.bedrooms || '',
       bathrooms: product.bathrooms || '',
       suites: product.suites || '',
@@ -266,6 +265,7 @@ export default function AdminProducts() {
       is_active: product.is_active !== false,
       niche: product.niche || 'vehicle',
       property_type: product.property_type || 'Casa',
+      property_status: product.property_status || 'ready',
       bedrooms: product.bedrooms || '',
       bathrooms: product.bathrooms || '',
       suites: product.suites || '',
@@ -281,6 +281,7 @@ export default function AdminProducts() {
     });
     setShowAddForm(true);
   };
+
   const closeForm = () => {
     setShowAddForm(false);
     setEditingId(null);
@@ -314,6 +315,7 @@ export default function AdminProducts() {
       is_active: true,
       niche: userNiche,
       property_type: 'Casa',
+      property_status: 'ready',
       bedrooms: '',
       bathrooms: '',
       suites: '',
@@ -332,22 +334,13 @@ export default function AdminProducts() {
   };
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
-    
-    // Remover tudo que não for dígito
-    value = value.replace(/\D/g, "");
-    
-    // Converter para centavos
-    const options = { minimumFractionDigits: 2 };
-    const result = new Intl.NumberFormat('pt-BR', options).format(
-      parseFloat(value) / 100
-    );
-
+    let value = e.target.value.replace(/\D/g, "");
     if (value === "") {
         setFormState({ ...formState, price: "" });
         return;
     }
-
+    const options = { minimumFractionDigits: 2 };
+    const result = new Intl.NumberFormat('pt-BR', options).format(parseFloat(value) / 100);
     setFormState({ ...formState, price: result });
   };
 
@@ -374,37 +367,30 @@ export default function AdminProducts() {
   };
 
   const handlePlanValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
-    value = value.replace(/\D/g, "");
-    const options = { minimumFractionDigits: 2 };
-    const result = new Intl.NumberFormat('pt-BR', options).format(
-      parseFloat(value) / 100
-    );
+    let value = e.target.value.replace(/\D/g, "");
     if (value === "") {
         setNewPlan({ ...newPlan, value: "" });
         return;
     }
+    const result = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(parseFloat(value) / 100);
     setNewPlan({ ...newPlan, value: result });
   };
 
   const handleCashPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, "");
-    const options = { minimumFractionDigits: 2 };
-    const result = new Intl.NumberFormat('pt-BR', options).format(parseFloat(value) / 100);
+    const result = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(parseFloat(value) / 100);
     setFormState({ ...formState, cash_price: value === "" ? "" : result });
   };
 
   const handleFinancingDownPaymentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, "");
-    const options = { minimumFractionDigits: 2 };
-    const result = new Intl.NumberFormat('pt-BR', options).format(parseFloat(value) / 100);
+    const result = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(parseFloat(value) / 100);
     setNewFinancingPlan({ ...newFinancingPlan, down_payment: value === "" ? "" : result });
   };
 
   const handleFinancingValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, "");
-    const options = { minimumFractionDigits: 2 };
-    const result = new Intl.NumberFormat('pt-BR', options).format(parseFloat(value) / 100);
+    const result = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(parseFloat(value) / 100);
     setNewFinancingPlan({ ...newFinancingPlan, value: value === "" ? "" : result });
   };
 
@@ -427,18 +413,12 @@ export default function AdminProducts() {
 
   const addColor = () => {
     if (!formState.colors.includes(newColor)) {
-      setFormState(prev => ({
-        ...prev,
-        colors: [...prev.colors, newColor]
-      }));
+      setFormState(prev => ({ ...prev, colors: [...prev.colors, newColor] }));
     }
   };
 
   const removeColor = (colorToRemove: string) => {
-    setFormState(prev => ({
-      ...prev,
-      colors: prev.colors.filter(c => c !== colorToRemove)
-    }));
+    setFormState(prev => ({ ...prev, colors: prev.colors.filter(c => c !== colorToRemove) }));
   };
 
   const handleDeleteProduct = (id: number) => {
@@ -487,9 +467,9 @@ export default function AdminProducts() {
         <div className="p-2 bg-blue-50 rounded-xl text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white">
           <Search className="w-5 h-5" />
         </div>
-        <input 
-          type="text" 
-          placeholder="Pesquise por nome ou descrição do produto..."
+        <input
+          type="text"
+          placeholder="Buscar no seu catálogo..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="flex-1 bg-transparent border-none outline-none font-medium text-gray-700 placeholder:text-gray-400"
@@ -503,8 +483,6 @@ export default function AdminProducts() {
           </button>
         )}
       </div>
-
-
 
       {showAddForm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -612,31 +590,6 @@ export default function AdminProducts() {
                         </select>
                       </div>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Câmbio</label>
-                        <select
-                          value={formState.transmission}
-                          onChange={(e) => setFormState({ ...formState, transmission: e.target.value })}
-                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none"
-                        >
-                          <option value="Manual">Manual</option>
-                          <option value="Automático">Automático</option>
-                          <option value="Semi-Automático">Semi-Automático</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Cor</label>
-                        <input
-                          type="text"
-                          value={formState.color}
-                          onChange={(e) => setFormState({ ...formState, color: e.target.value })}
-                          placeholder="Ex: Preta"
-                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                        />
-                      </div>
-                    </div>
                   </div>
                 ) : (
                   <div className="space-y-6">
@@ -652,6 +605,21 @@ export default function AdminProducts() {
                         </select>
                       </div>
                       <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Status do Imóvel</label>
+                        <select
+                          value={formState.property_status}
+                          onChange={(e) => setFormState({ ...formState, property_status: e.target.value })}
+                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none"
+                        >
+                          <option value="ready">Pronto</option>
+                          <option value="building">Em Construção</option>
+                          <option value="launch">Lançamento</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
                         <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Preço (R$)</label>
                         <input
                           type="text"
@@ -659,6 +627,16 @@ export default function AdminProducts() {
                           onChange={handlePriceChange}
                           placeholder="0,00"
                           className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase flex items-center gap-1"><Maximize className="w-3 h-3" /> Área (m²)</label>
+                        <input
+                          type="number"
+                          value={formState.area}
+                          onChange={(e) => setFormState({ ...formState, area: e.target.value })}
+                          placeholder="Ex: 120"
+                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                         />
                       </div>
                     </div>
@@ -705,18 +683,7 @@ export default function AdminProducts() {
                         />
                       </div>
                     </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase flex items-center gap-1"><Maximize className="w-3 h-3" /> Área (m²)</label>
-                        <input
-                          type="number"
-                          value={formState.area}
-                          onChange={(e) => setFormState({ ...formState, area: e.target.value })}
-                          placeholder="Ex: 120"
-                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                        />
-                      </div>
                       <div>
                         <label className="block text-xs font-bold text-gray-500 mb-1 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Localização / Bairro</label>
                         <input
@@ -727,18 +694,16 @@ export default function AdminProducts() {
                           className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                         />
                       </div>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 mb-1 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Link do Google Maps (Opcional)</label>
-                      <input
-                        type="url"
-                        value={formState.map_url}
-                        onChange={(e) => setFormState({ ...formState, map_url: e.target.value })}
-                        placeholder="https://goo.gl/maps/..."
-                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                      />
-                      <p className="text-[10px] text-gray-400 mt-1 italic pl-1">Cole aqui o link de compartilhamento do Google Maps do imóvel.</p>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Link do Google Maps (Opcional)</label>
+                        <input
+                          type="url"
+                          value={formState.map_url}
+                          onChange={(e) => setFormState({ ...formState, map_url: e.target.value })}
+                          placeholder="https://goo.gl/maps/..."
+                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -811,6 +776,31 @@ export default function AdminProducts() {
                 </div>
               </div>
 
+              <div className="space-y-4">
+                <label className="block text-sm font-bold text-gray-700 uppercase tracking-wider">Galeria de Imagens (Até 5)</label>
+                <div className="grid grid-cols-5 gap-2">
+                  {formState.images.map((img, idx) => (
+                    <div key={idx} className="relative aspect-square bg-gray-50 rounded-xl overflow-hidden border border-gray-100 group">
+                      <img src={img} className="w-full h-full object-cover" alt={`Gallery ${idx}`} />
+                      <button 
+                        type="button"
+                        onClick={() => removeGalleryImage(idx)}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {formState.images.length < 5 && (
+                    <label className="aspect-square bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-blue-300 transition-colors">
+                      <Plus className="w-6 h-6 text-gray-300" />
+                      <span className="text-[10px] text-gray-400 font-bold mt-1">Adicionar</span>
+                      <input type="file" className="hidden" accept="image/*" onChange={handleGalleryUpload} />
+                    </label>
+                  )}
+                </div>
+              </div>
+
               {/* Seção Plano de Consórcio Detalhado */}
               <div className="bg-purple-50/50 p-6 rounded-3xl border border-purple-100 space-y-6">
                 <div className="flex items-center justify-between">
@@ -840,9 +830,9 @@ export default function AdminProducts() {
                             <span className="text-gray-700 font-medium">de <span className="text-purple-700 font-bold">R$ {plan.value}</span> /mês</span>
                           </div>
                           <button 
-                            type="button"
+                            type="button" 
                             onClick={() => removePlan(idx)}
-                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors border-none bg-transparent"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -851,7 +841,8 @@ export default function AdminProducts() {
                     </div>
 
                     <div className="p-4 bg-white border border-dashed border-purple-200 rounded-2xl flex flex-wrap items-center gap-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] text-gray-400 font-bold uppercase ml-1">Quantidade</span>
                         <input
                           type="number"
                           value={newPlan.installments || ''}
@@ -859,26 +850,23 @@ export default function AdminProducts() {
                           placeholder="Qtd"
                           className="w-24 px-3 py-2 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-center font-bold"
                         />
-                        <span className="text-xs text-gray-400 font-bold uppercase">parcelas</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-400 font-bold uppercase">de R$</span>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] text-gray-400 font-bold uppercase ml-1">Valor da Parcela</span>
                         <input
                           type="text"
                           value={newPlan.value}
                           onChange={handlePlanValueChange}
                           placeholder="0,00"
-                          className="w-28 px-3 py-2 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none"
+                          className="w-32 px-3 py-2 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none font-bold"
                         />
-                        <span className="text-xs text-gray-400 font-bold uppercase">/mês</span>
                       </div>
                       <button
                         type="button"
                         onClick={addPlan}
-                        className="ml-auto flex items-center gap-2 py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all shadow-md active:scale-95"
+                        className="mt-5 px-4 py-2 bg-purple-600 text-white rounded-xl font-bold text-xs uppercase hover:bg-purple-700 transition-colors shadow-lg shadow-purple-100"
                       >
-                        <Plus className="w-4 h-4" />
-                        Adicionar
+                        + Add Plano
                       </button>
                     </div>
                   </div>
@@ -1011,37 +999,8 @@ export default function AdminProducts() {
                         Adicionar
                       </button>
                     </div>
-                    
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest text-center py-2 animate-pulse">
-                      Sujeito a análise de crédito
-                    </p>
                   </div>
                 )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">Galeria de Imagens (Até 5)</label>
-                <div className="grid grid-cols-5 gap-2">
-                  {formState.images.map((img, idx) => (
-                    <div key={idx} className="relative aspect-square bg-gray-50 rounded-xl overflow-hidden border border-gray-100 group">
-                      <img src={img} className="w-full h-full object-cover" alt={`Gallery ${idx}`} />
-                      <button 
-                        type="button"
-                        onClick={() => removeGalleryImage(idx)}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                  {formState.images.length < 5 && (
-                    <label className="aspect-square bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-blue-300 transition-colors">
-                      <Plus className="w-6 h-6 text-gray-300" />
-                      <span className="text-[10px] text-gray-400 font-bold mt-1">Adicionar</span>
-                      <input type="file" className="hidden" accept="image/*" onChange={handleGalleryUpload} />
-                    </label>
-                  )}
-                </div>
               </div>
 
               {formState.has_liberacred && (
@@ -1058,7 +1017,6 @@ export default function AdminProducts() {
                       <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'liberacred_image')} />
                     </label>
                   </div>
-                  <p className="text-[10px] text-orange-400 mt-2 italic px-2">Este banner aparecerá quando o cliente clicar no botão "Liberacred" no catálogo.</p>
                 </div>
               )}
 
@@ -1088,121 +1046,32 @@ export default function AdminProducts() {
                     </label>
                   ))}
                 </div>
-                <p className="text-xs text-gray-400 mt-6 font-bold uppercase tracking-wider">
-                  {formState.optionals.length} opcional(is) selecionado(s)
-                </p>
               </div>
 
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">Descrição Detalhada</label>
-                <textarea
-                  required
-                  value={formState.description}
-                  onChange={(e) => setFormState({ ...formState, description: e.target.value })}
-                  className="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all h-32 resize-none"
-                  placeholder={userNiche === 'realestate' ? "Fale sobre a infraestrutura, pontos de interesse próximos, acabamento..." : "Fale sobre cilindrada, potência, tecnologias..."}
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">Vídeo de Apresentação (Link)</label>
-                <input
-                  type="url"
-                  value={formState.video_url}
-                  onChange={(e) => setFormState({ ...formState, video_url: e.target.value })}
-                  className="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all"
-                  placeholder="https://youtube.com/watch?v=... ou link direto .mp4"
-                />
-                <p className="text-[10px] text-gray-400 mt-2 italic px-2">Cole aqui o link do YouTube, Vimeo ou link direto do vídeo.</p>
-              </div>
-
-              {userNiche !== 'realestate' && (
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">Cores Disponíveis</label>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {formState.colors.map(color => (
-                      <div key={color} className="group relative">
-                        <div 
-                          className="w-10 h-10 rounded-full border-2 border-white shadow-md cursor-pointer transition-transform hover:scale-110"
-                          style={{ backgroundColor: color }}
-                        />
-                        <button 
-                          type="button"
-                          onClick={() => removeColor(color)}
-                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                    <div className="flex items-center gap-2 ml-2">
-                      <input 
-                        type="color" 
-                        value={newColor} 
-                        onChange={(e) => setNewColor(e.target.value)}
-                        className="w-10 h-10 rounded-full bg-transparent border-none cursor-pointer p-0"
-                      />
-                      <button 
-                        type="button"
-                        onClick={addColor}
-                        className="p-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors text-gray-600"
-                      >
-                        <Plus className="w-4 h-4" /> Adicionar Cor
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-100 rounded-2xl">
-                <input
-                  type="checkbox"
-                  id="liberacred"
-                  checked={formState.has_liberacred}
-                  onChange={(e) => setFormState({ ...formState, has_liberacred: e.target.checked })}
-                  className="w-5 h-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-lg cursor-pointer"
-                />
-                <label htmlFor="liberacred" className="text-sm font-bold text-blue-900 cursor-pointer">Ativar Banner Liberacred neste produto</label>
-              </div>
-
-              <div className="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl">
-                <input
-                  type="checkbox"
-                  id="is_highlighted"
-                  checked={formState.is_highlighted}
-                  onChange={(e) => setFormState({ ...formState, is_highlighted: e.target.checked })}
-                  className="w-5 h-5 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded-lg cursor-pointer"
-                />
-                <label htmlFor="is_highlighted" className="text-sm font-bold text-emerald-900 cursor-pointer uppercase tracking-tight">Marcar como Destaque (Topo do Catálogo)</label>
-              </div>
-
-              <div className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-100 rounded-2xl">
-                <input
-                  type="checkbox"
-                  id="is_active"
-                  checked={formState.is_active}
-                  onChange={(e) => setFormState({ ...formState, is_active: e.target.checked })}
-                  className="w-5 h-5 text-gray-600 focus:ring-gray-500 border-gray-300 rounded-lg cursor-pointer"
-                />
-                <label htmlFor="is_active" className="text-sm font-bold text-gray-700 cursor-pointer uppercase tracking-tight">Produto Ativo (Aparece no Catálogo)</label>
-              </div>
-
-
-              <div className="flex gap-4 pt-4 sticky bottom-0 bg-white py-4 border-t border-gray-50">
+              <div className="flex items-center gap-3 p-6 bg-blue-50/50 border border-blue-100 rounded-[2rem]">
                 <button
                   type="button"
                   onClick={closeForm}
-                  className="flex-1 py-4 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl transition-all"
+                  className="px-8 py-4 bg-white hover:bg-gray-50 text-gray-700 font-bold rounded-2xl transition-all border border-gray-200"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  disabled={uploading || submitting}
-                  className="flex-[2] py-4 px-4 bg-[#003da5] hover:bg-[#002b75] text-white font-bold rounded-2xl transition-all shadow-xl shadow-blue-100 disabled:opacity-50 flex items-center justify-center gap-2"
+                  disabled={submitting}
+                  className="flex-1 py-4 bg-[#003da5] hover:bg-[#002b75] text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-100 disabled:opacity-50"
                 >
-                  {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
-                  {editingId ? 'Atualizar Produto' : 'Salvar no Catálogo'}
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-5 h-5" />
+                      {editingId ? 'Salvar Alterações' : 'Cadastrar Produto'}
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -1210,6 +1079,7 @@ export default function AdminProducts() {
         </div>
       )}
 
+      {/* Lista de Produtos */}
       <div className="grid grid-cols-1 gap-4">
         {products.length === 0 ? (
           <div className="bg-white p-20 rounded-[2.5rem] border-2 border-dashed border-gray-100 text-center text-gray-400">
@@ -1226,89 +1096,98 @@ export default function AdminProducts() {
             .map((product) => (
             <div 
               key={product.id} 
-              className="bg-white p-4 lg:p-5 rounded-3xl lg:rounded-[2rem] shadow-sm border border-gray-100 flex flex-col lg:flex-row lg:items-center justify-between group hover:shadow-xl hover:shadow-gray-100 transition-all duration-300 gap-6"
+              className="bg-white p-6 rounded-[2.5rem] border border-gray-100 flex items-center gap-6 group hover:shadow-xl hover:shadow-blue-50/50 transition-all animate-in slide-in-from-bottom-4 duration-500"
             >
-              <div className="flex items-center gap-4 lg:gap-6">
-                <div className="w-20 h-20 lg:w-24 lg:h-24 bg-gray-50 rounded-2xl flex items-center justify-center overflow-hidden border border-gray-50 shrink-0">
-                  <img src={product.image} alt={product.name} className="w-full h-full object-contain p-2 transition-transform duration-500 group-hover:scale-110" referrerPolicy="no-referrer" />
+              <div className="w-24 h-24 lg:w-32 lg:h-32 bg-gray-50 rounded-3xl overflow-hidden flex-shrink-0 border border-gray-50 group-hover:scale-105 transition-transform duration-500">
+                <img src={product.image} className="w-full h-full object-cover" alt={product.name} />
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-lg lg:text-xl font-bold text-gray-900 truncate font-heading group-hover:text-blue-600 transition-colors uppercase">{product.name}</h3>
+                  {product.niche === 'realestate' && (
+                    <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-black uppercase rounded-full border border-blue-100">
+                      Imóvel
+                    </span>
+                  )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-black text-gray-900 text-base lg:text-xl truncate">{product.name}</h3>
-                  <p className="text-xs lg:text-sm text-gray-400 font-bold uppercase tracking-widest mt-0.5">{product.brand || 'Sem Marca'}</p>
-                  <div className="flex flex-wrap gap-1.5 mt-2.5">
-                    {product.has_liberacred && <span className="text-[9px] font-black bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-lg uppercase tracking-wider">Liberacred</span>}
-                    {product.video_url && <span className="text-[9px] font-black bg-red-100 text-red-700 px-2.5 py-1 rounded-lg uppercase tracking-wider">Vídeo</span>}
-                    {product.is_highlighted && <span className="text-[9px] font-black bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-lg uppercase tracking-wider">Destaque</span>}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-3">
+                  <div className="flex items-center gap-1.5 text-blue-600 font-bold text-base lg:text-lg">
+                    R$ {product.price}
+                  </div>
+                  {product.year && (
+                    <div className="flex items-center gap-1.5 text-gray-400 text-xs font-bold uppercase tracking-wider">
+                      <Check className="w-3.5 h-3.5" />
+                      {product.year}
+                    </div>
+                  )}
+                  <div className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider ${product.is_active !== false ? 'text-emerald-500' : 'text-gray-400'}`}>
+                    <div className={`w-2 h-2 rounded-full ${product.is_active !== false ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300'}`} />
+                    {product.is_active !== false ? 'Ativo' : 'Inativo'}
                   </div>
                 </div>
-              </div>
-
-              <div className="flex items-center justify-between lg:justify-end gap-2 lg:gap-6 pt-4 lg:pt-0 border-t lg:border-t-0 border-gray-50">
-                <div className="flex flex-col items-center shrink-0">
-                  <label className="relative inline-flex items-center cursor-pointer group">
-                    <input 
-                      type="checkbox" 
-                      className="sr-only peer"
-                      checked={product.is_active !== false}
-                      onChange={async (e) => {
-                        e.stopPropagation();
-                        const oldStatus = product.is_active !== false;
-                        const newStatus = !oldStatus;
-                        
-                        // Optimistic update
-                        setProducts(prev => prev.map(p => p.id === product.id ? { ...p, is_active: newStatus } : p));
-                        
-                        try {
-                          const res = await fetch(`/api/products/${product.id}`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ is_active: newStatus })
-                          });
-                          
-                          if (res.ok) {
-                            toast.success(newStatus ? 'Produto Ativado!' : 'Produto Desativado!');
-                            fetchProducts();
-                          } else {
-                            const err = await res.json();
-                            toast.error(err.error || 'Erro ao atualizar status');
-                            // Rollback
+                
+                <div className="flex gap-2">
+                  <div className="flex flex-col items-center">
+                    <label className="relative inline-flex items-center cursor-pointer group">
+                      <input 
+                        type="checkbox" 
+                        className="sr-only peer"
+                        checked={product.is_active !== false}
+                        onChange={async (e) => {
+                          e.stopPropagation();
+                          const oldStatus = product.is_active !== false;
+                          const newStatus = !oldStatus;
+                          setProducts(prev => prev.map(p => p.id === product.id ? { ...p, is_active: newStatus } : p));
+                          try {
+                            const res = await fetch(`/api/products/${product.id}`, {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ is_active: newStatus })
+                            });
+                            if (res.ok) {
+                              toast.success(newStatus ? 'Produto Ativado!' : 'Produto Desativado!');
+                              fetchProducts();
+                            } else {
+                              const err = await res.json();
+                              toast.error(err.error || 'Erro ao atualizar status');
+                              setProducts(prev => prev.map(p => p.id === product.id ? { ...p, is_active: oldStatus } : p));
+                            }
+                          } catch (err) {
+                            toast.error('Erro de conexão ao atualizar status');
                             setProducts(prev => prev.map(p => p.id === product.id ? { ...p, is_active: oldStatus } : p));
                           }
-                        } catch (err) {
-                          toast.error('Erro de conexão ao atualizar status');
-                          // Rollback
-                          setProducts(prev => prev.map(p => p.id === product.id ? { ...p, is_active: oldStatus } : p));
-                        }
-                      }}
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                  <span className={`text-[8px] font-bold uppercase mt-1 ${product.is_active !== false ? 'text-blue-600' : 'text-gray-400'}`}>
-                    {product.is_active !== false ? 'Ativo' : 'Inativo'}
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <button 
-                    onClick={() => handleDuplicate(product)}
-                    className="p-3.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-2xl transition-all"
-                    title="Duplicar"
-                  >
-                    <Copy className="w-5 h-5 lg:w-6 lg:h-6" />
-                  </button>
-                  <button 
-                    onClick={() => handleEdit(product)}
-                    className="p-3.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-2xl transition-all"
-                    title="Editar"
-                  >
-                    <Edit2 className="w-5 h-5 lg:w-6 lg:h-6" />
-                  </button>
-                  <button 
-                    onClick={() => handleDeleteProduct(product.id)}
-                    className="p-3.5 text-red-500 bg-red-50 hover:bg-red-100 rounded-2xl transition-all"
-                    title="Excluir"
-                  >
-                    <Trash2 className="w-5 h-5 lg:w-6 lg:h-6" />
-                  </button>
+                        }}
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                    <span className={`text-[8px] font-bold uppercase mt-1 ${product.is_active !== false ? 'text-blue-600' : 'text-gray-400'}`}>
+                      {product.is_active !== false ? 'Ativo' : 'Inativo'}
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => handleDuplicate(product)}
+                      className="p-3.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-2xl transition-all"
+                      title="Duplicar"
+                    >
+                      <Copy className="w-5 h-5 lg:w-6 lg:h-6" />
+                    </button>
+                    <button 
+                      onClick={() => handleEdit(product)}
+                      className="p-3.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-2xl transition-all"
+                      title="Editar"
+                    >
+                      <Edit2 className="w-5 h-5 lg:w-6 lg:h-6" />
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteProduct(product.id)}
+                      className="p-3.5 text-red-500 bg-red-50 hover:bg-red-100 rounded-2xl transition-all"
+                      title="Excluir"
+                    >
+                      <Trash2 className="w-5 h-5 lg:w-6 lg:h-6" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

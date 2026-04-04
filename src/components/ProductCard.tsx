@@ -1,7 +1,7 @@
 import React, { useState, useEffect, ReactNode } from 'react';
 import { Product } from '../types';
 import { motion } from 'motion/react';
-import { MessageCircle, Info, FileText, Calculator, CreditCard, ChevronLeft, ChevronRight, Package, Check, MapPin } from 'lucide-react';
+import { MessageCircle, Info, FileText, Calculator, CreditCard, ChevronLeft, ChevronRight, Package, Check, MapPin, Maximize, Bed, Bath, Car } from 'lucide-react';
 import Modal from './Modal';
 import FinancingForm from './FinancingForm';
 import ThreeSixtyViewer from './ThreeSixtyViewer';
@@ -131,12 +131,57 @@ export default function ProductCard({
             className="w-full h-full object-contain transition-transform duration-500 hover:scale-105"
             referrerPolicy="no-referrer"
           />
+          
+          {/* Status Tag for Real Estate */}
+          {isRealEstate && product.property_status && (
+            <div className="absolute top-3 left-3 z-10">
+              <span className={`px-3 py-1 font-black text-[9px] uppercase tracking-wider rounded-lg shadow-lg border backdrop-blur-md ${
+                product.property_status === 'ready' 
+                  ? 'bg-emerald-500/90 text-white border-emerald-400' 
+                  : product.property_status === 'building'
+                    ? 'bg-amber-500/90 text-white border-amber-400'
+                    : 'bg-purple-600/90 text-white border-purple-400'
+              }`}>
+                {product.property_status === 'ready' ? 'Pronto' : product.property_status === 'building' ? 'Em Construção' : 'Lançamento'}
+              </span>
+            </div>
+          )}
         </div>
         
         <div className="w-full h-1.5 mb-6 transition-colors rounded-full" style={{ backgroundColor: themeColor }} />
 
-        <h3 className="text-sm font-bold text-gray-900 mb-6 uppercase tracking-tight">{product.name}</h3>
+        <h3 className="text-sm font-bold text-gray-900 mb-2 uppercase tracking-tight line-clamp-1">{product.name}</h3>
         
+        {/* Real Estate Technical Icons */}
+        {isRealEstate && (
+          <div className="flex items-center justify-center gap-3 mb-6 flex-wrap px-2">
+            {product.area && (
+              <div className="flex items-center gap-1 text-[10px] font-bold text-gray-500 uppercase">
+                <Maximize className="w-3 h-3 text-gray-400" />
+                {product.area}m²
+              </div>
+            )}
+            {product.bedrooms && (
+              <div className="flex items-center gap-1 text-[10px] font-bold text-gray-500 uppercase border-l border-gray-100 pl-3">
+                <Bed className="w-3 h-3 text-gray-400" />
+                {product.bedrooms}
+              </div>
+            )}
+            {product.bathrooms && (
+              <div className="flex items-center gap-1 text-[10px] font-bold text-gray-500 uppercase border-l border-gray-100 pl-3">
+                <Bath className="w-3 h-3 text-gray-400" />
+                {product.bathrooms}
+              </div>
+            )}
+            {product.parking_spaces && (
+              <div className="flex items-center gap-1 text-[10px] font-bold text-gray-500 uppercase border-l border-gray-100 pl-3">
+                <Car className="w-3 h-3 text-gray-400" />
+                {product.parking_spaces}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex flex-col gap-2 w-full">
           <button
             onClick={handleView}

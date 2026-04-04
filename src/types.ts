@@ -32,6 +32,7 @@ export interface Product {
   is_active?: boolean;
   niche?: 'vehicle' | 'realestate';
   property_type?: string;
+  property_status?: 'ready' | 'building' | 'launch';
   bedrooms?: number | string;
   bathrooms?: number | string;
   suites?: number | string;
