@@ -6,7 +6,6 @@ import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
-import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
@@ -26,6 +25,8 @@ const viewCache: Record<string, number> = {};
 const VIEW_COOLDOWN = 60 * 60 * 1000; // 1 hour
 
 const app = express();
+app.use(express.json({ limit: '10mb' }));
+app.use(cookieParser());
 
 // Webhook Debug Logger
 const addWebhookLog = async (data: any) => {
@@ -39,9 +40,6 @@ const addWebhookLog = async (data: any) => {
     console.error('[DEBUG-LOG] Failed to save webhook log:', err);
   }
 };
-
-app.use(express.json({ limit: '10mb' }));
-app.use(cookieParser());
 
 // Auth Middlewares
 const authenticate = (req: any, res: any, next: any) => {
@@ -62,24 +60,17 @@ const authenticateMaster = async (req: any, res: any, next: any) => {
   try {
     const decoded: any = jwt.verify(token, JWT_SECRET);
     const { data: profile } = await supabase.from('profiles').select('*').eq('id', decoded.id).single();
-    
-    const isMaster = profile?.username === 'admin' || 
-                    (profile as any)?.is_admin === true;
-
-    if (!isMaster) {
-      return res.status(403).json({ error: 'Acesso negado: você não tem permissão de Master Admin.' });
-    }
-    
+    const isMaster = profile?.username === 'admin' || profile?.is_admin === true;
+    if (!isMaster) return res.status(403).json({ error: 'Acesso negado Master' });
     req.user = decoded;
     next();
   } catch (err) {
-    res.status(401).json({ error: 'Sessão inválida. Por favor, faça login novamente.' });
+    res.status(401).json({ error: 'Sessão inválida' });
   }
 };
 
-// --- API ROUTES ---
+// --- API ROUTES (SYNCED WITH SERVER.TS) ---
 
-// Public settings
 app.get('/api/settings', async (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   const { data, error } = await supabase.from('system_settings').select('*').eq('id', 1).single();
@@ -87,226 +78,154 @@ app.get('/api/settings', async (req, res) => {
   res.json(data);
 });
 
-// Financial & Billing
-app.get('/api/admin/faturas', authenticateMaster, async (req, res) => {
-  const { data, error } = await supabase.from('faturas').select('*').order('created_at', { ascending: false });
-  if (error) return res.status(400).json({ error: error.message });
+app.get('/api/public/settings', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  const { data, error } = await supabase.from('system_settings').select('*').eq('id', 1).single();
+  res.json(data || {});
+});
+
+app.get('/api/admin/settings', authenticateMaster, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  const { data, error } = await supabase.from('system_settings').select('*').eq('id', 1).single();
   res.json(data);
 });
 
-// Onboarding Routes
-app.get('/api/admin/onboarding', authenticateMaster, async (req, res) => {
-  const { data, error } = await supabase.from('onboarding_submissions').select('*').order('created_at', { ascending: false });
-  if (error) return res.status(400).json({ error: error.message });
-  res.json(data);
-});
-
-app.post('/api/public/onboarding', async (req, res) => {
-  const { 
-    client_name, client_email, client_whatsapp, niche, setup_type, 
-    product_estimated_count, business_name, business_location, 
-    additional_notes, client_document, role_title, suggested_username, 
-    client_logo_url, suggested_password 
-  } = req.body;
-
-  const { data, error } = await supabase.from('onboarding_submissions').insert([{
-    client_name, client_email, client_whatsapp, niche, setup_type, 
-    product_estimated_count, business_name, business_location, 
-    additional_notes, client_document, role_title, suggested_username, 
-    client_logo_url, suggested_password, status: 'pending'
-  }]).select().single();
-  
-  if (error) return res.status(400).json({ error: error.message });
-  res.json(data);
-});
-
-app.delete('/api/admin/onboarding/:id', authenticateMaster, async (req, res) => {
-  const { error } = await supabase.from('onboarding_submissions').delete().eq('id', req.params.id);
+app.put('/api/admin/settings', authenticateMaster, async (req, res) => {
+  const { error } = await supabase.from('system_settings').update(req.body).eq('id', 1);
   if (error) return res.status(400).json({ error: error.message });
   res.json({ success: true });
 });
 
-// Auth Routes
+// Stats, Testimonials, Plans
+app.get('/api/testimonials', async (req, res) => {
+  const { data, error } = await supabase.from('testimonials').select('*').order('created_at', { ascending: false });
+  res.json(data || []);
+});
+
+app.get('/api/public/plans', async (req, res) => {
+  const { data: plans, error } = await supabase.from('plans').select('*').order('id', { ascending: true });
+  res.json(plans || []);
+});
+
+app.get('/api/admin/stats', authenticateMaster, async (req, res) => {
+  try {
+    const userRes = await supabase.from('profiles').select('id, username, is_admin, plan_id, status, views');
+    const userProfiles = userRes.data || [];
+    const { data: plans } = await supabase.from('plans').select('*');
+    const { data: authUsers } = await supabase.auth.admin.listUsers();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    res.json({ 
+      userCount: userProfiles.length, 
+      totalViews: userProfiles.reduce((acc, curr) => acc + (curr.views || 0), 0),
+      adminsCount: userProfiles.filter(u => u.username === 'admin' || u.is_admin === true).length,
+      membersCount: userProfiles.length - userProfiles.filter(u => u.username === 'admin' || u.is_admin === true).length,
+      planStats: (plans || []).map(p => ({
+        name: p.name,
+        count: userProfiles.filter(u => u.plan_id && Number(u.plan_id) === Number(p.id)).length
+      })),
+      newUsersCount: (authUsers?.users || []).filter(u => new Date(u.created_at) > thirtyDaysAgo).length,
+      activeCount: userProfiles.filter(u => u.status === 'active').length,
+      inactiveCount: userProfiles.filter(u => u.status !== 'active').length
+    });
+  } catch (err: any) { res.status(400).json({ error: err.message }); }
+});
+
+// Onboarding
+app.post('/api/public/onboarding', async (req, res) => {
+  const { error } = await supabase.from('onboarding_submissions').insert([req.body]);
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ success: true });
+});
+
+app.get('/api/admin/onboarding', authenticateMaster, async (req, res) => {
+  const { data, error } = await supabase.from('onboarding_submissions').select('*').order('created_at', { ascending: false });
+  res.json(data || []);
+});
+
+app.delete('/api/admin/onboarding/:id', authenticateMaster, async (req, res) => {
+  await supabase.from('onboarding_submissions').delete().eq('id', req.params.id);
+  res.json({ success: true });
+});
+
+// Auth & Profiles
+app.post('/api/auth/login', async (req, res) => {
+  const { username, password } = req.body;
+  const email = username.includes('@') ? username : `${username}@smartcartao.com`;
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return res.status(401).json({ error: 'Erro de login' });
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single();
+  const token = jwt.sign({ id: data.user.id, email: data.user.email }, JWT_SECRET, { expiresIn: '7d' });
+  res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'none' });
+  res.json({ user: { id: data.user.id, username, slug: profile?.slug, is_admin: profile?.is_admin || username === 'admin' } });
+});
+
 app.post('/api/auth/register', authenticateMaster, async (req, res) => {
   const { username, password, display_name, role_title, slug, plan_id, profile_image } = req.body;
   try {
-    const { data: settings } = await supabase.from('system_settings').select('*').eq('id', 1).single();
-    const default_logo = settings?.default_logo;
-
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: req.body.email || (username.includes('@') ? username : `${username}@smartcartao.com`),
-      password: password,
+      email: req.body.email || `${username}@smartcartao.com`,
+      password,
       email_confirm: true
     });
     if (authError) throw authError;
 
     let expiryDate = null;
     if (plan_id) {
-      const { data: plan } = await supabase.from('plans').select('*').eq('id', plan_id).single();
-      if (plan) {
-        const d = new Date();
-        d.setMonth(d.getMonth() + plan.months);
-        expiryDate = d.toISOString().split('T')[0];
-      }
+       const { data: plan } = await supabase.from('plans').select('months').eq('id', plan_id).single();
+       if (plan) {
+         const d = new Date();
+         d.setMonth(d.getMonth() + plan.months);
+         expiryDate = d.toISOString().split('T')[0];
+       }
     }
 
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({ 
-        id: authData.user.id, 
-        username, 
-        display_name, 
-        role_title, 
-        slug,
-        profile_image: profile_image || default_logo,
-        documento: req.body.documento || req.body.cpf || null,
-        email: req.body.email || authData.user.email,
-        plan_id: plan_id || null,
-        expiry_date: expiryDate,
-        is_admin: req.body.is_admin === true,
-        niche: req.body.niche || 'vehicle',
-        status: 'active'
-      });
-    if (profileError) throw profileError;
-
+    await supabase.from('profiles').insert({ 
+      id: authData.user.id, username, display_name, role_title, slug,
+      profile_image, documento: req.body.documento || req.body.cpf,
+      plan_id, expiry_date: expiryDate, niche: req.body.niche || 'vehicle', status: 'active'
+    });
     res.json({ id: authData.user.id });
-  } catch (err: any) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-app.post('/api/auth/login', async (req, res) => {
-  const { username, password } = req.body;
-  try {
-    const email = username.includes('@') ? username : `${username}@smartcartao.com`;
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    
-    const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single();
-    
-    if (profile?.status === 'blocked') {
-      return res.status(403).json({ error: 'Conta bloqueada.' });
-    }
-
-    const token = jwt.sign({ id: data.user.id, email: data.user.email }, JWT_SECRET, { expiresIn: '7d' });
-    res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'none' });
-    res.json({ user: { id: data.user.id, username, slug: profile?.slug, is_admin: profile?.is_admin || username === 'admin' } });
-  } catch (err: any) {
-    res.status(401).json({ error: 'Credenciais inválidas' });
-  }
-});
-
-app.post('/api/auth/logout', (req, res) => {
-  res.clearCookie('token');
-  res.json({ success: true });
+  } catch (err: any) { res.status(400).json({ error: err.message }); }
 });
 
 app.get('/api/me', authenticate, async (req: any, res) => {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', req.user.id).single();
-  if (error) return res.status(404).json({ error: 'Perfil não encontrado' });
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', req.user.id).single();
+  if (!profile) return res.status(404).json({ error: 'Não encontrado' });
   res.json({ ...profile, is_admin: profile.is_admin || profile.username === 'admin' });
 });
 
-// Admin Stats
-app.get('/api/admin/stats', authenticateMaster, async (req, res) => {
-  try {
-    // 1. Basic counts
-    const userRes = await supabase.from('profiles').select('id, username, is_admin, plan_id, status, views');
-    const userProfiles = userRes.data || [];
-    const userCount = userProfiles.length;
-    
-    // 2. Views
-    const totalViews = userProfiles.reduce((acc, curr) => acc + (curr.views || 0), 0);
-
-    // 3. Admins vs Members
-    const adminsCount = userProfiles.filter(u => u.username === 'admin' || u.is_admin === true).length;
-    const membersCount = userProfiles.length - adminsCount;
-
-    // 4. Users per Plan
-    const { data: plans } = await supabase.from('plans').select('*');
-    const planStats = (plans || []).map(p => ({
-      name: p.name,
-      count: userProfiles.filter(u => u.plan_id && Number(u.plan_id) === Number(p.id)).length
-    }));
-
-    // Add "Sem Plano" if needed
-    const noPlanCount = userProfiles.filter(u => !u.plan_id).length;
-    if (noPlanCount > 0) planStats.push({ name: 'Sem Plano', count: noPlanCount });
-
-    // 5. New users in last 30 days
-    const { data: authUsers } = await supabase.auth.admin.listUsers();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const newUsersCount = (authUsers?.users || []).filter(u => new Date(u.created_at) > thirtyDaysAgo).length;
-
-    // 6. Active vs Inactive
-    const activeCount = userProfiles.filter(u => u.status === 'active').length;
-    const inactiveCount = userProfiles.length - activeCount;
-    
-    res.json({ 
-      userCount, 
-      totalViews,
-      adminsCount,
-      membersCount,
-      planStats,
-      newUsersCount,
-      activeCount,
-      inactiveCount
-    });
-  } catch (err: any) {
-    console.error('[STATS] Error:', err);
-    res.status(400).json({ error: `Erro nas estatísticas: ${err.message}` });
-  }
+// Products
+app.get('/api/products', authenticate, async (req: any, res) => {
+  const { data } = await supabase.from('products').select('*').eq('user_id', req.user.id);
+  res.json(data || []);
 });
 
-// Plans Management
-app.get('/api/admin/plans', authenticateMaster, async (req, res) => {
-  const { data: plans, error } = await supabase.from('plans').select('*').order('id', { ascending: true });
-  if (error) return res.status(400).json({ error: error.message });
-  res.json(plans);
+app.get('/api/profile/:slug', async (req, res) => {
+  const { data: profile } = await supabase.from('profiles').select('*').eq('slug', req.params.slug).single();
+  if (!profile) return res.status(404).json({ error: 'Perfil não encontrado' });
+  await supabase.from('profiles').update({ views: (profile.views || 0) + 1 }).eq('id', profile.id);
+  const { data: products } = await supabase.from('products').select('*').eq('user_id', profile.id);
+  res.json({ user: profile, products: (products || []).filter(p => p.is_active !== false) });
 });
 
-app.get('/api/public/plans', async (req, res) => {
-  const { data: plans, error } = await supabase.from('plans').select('*').order('id', { ascending: true });
-  if (error) return res.status(400).json({ error: error.message });
-  res.json(plans);
-});
-
-// --- SPA & SLUG HANDLING FOR VERCEL ---
+// --- SPA & METADATA FOR VERCEL ---
 app.get(['/', '/login', '/register', '/admin', '/admin/*', '/dashboard', '/dashboard/*', '/plans', '/onboarding', '/:slug', '/:slug/catalogo'], async (req, res, next) => {
-  const originalUrl = req.originalUrl || req.url;
-  
-  if (originalUrl.startsWith('/api/') || (originalUrl.includes('.') && !originalUrl.startsWith('/admin/'))) {
-    return next();
-  }
+  if (req.url.startsWith('/api/') || req.url.includes('.')) return next();
 
   const { slug } = req.params;
   const isCatalog = req.path.endsWith('/catalogo');
-  const reservedSlugs = ['login', 'register', 'admin', 'dashboard', 'api', 'plans', 'onboarding', 'assets', 'vite'];
-  const isProfileSlug = slug && !reservedSlugs.includes(slug.toLowerCase()) && !originalUrl.includes('/', 1);
+  const reserved = ['login', 'register', 'admin', 'dashboard', 'api', 'plans', 'onboarding', 'assets'];
+  const isProfileSlug = slug && !reserved.includes(slug.toLowerCase()) && !req.url.includes('/', 1);
   
   try {
-    const possiblePaths = [
-      path.join(process.cwd(), 'dist', 'templ.html'),
-      path.join(process.cwd(), 'dist', 'index.html'),
-      path.join(process.cwd(), 'index.html')
-    ];
-    
-    let indexPath = '';
-    for (const p of possiblePaths) {
-      if (fs.existsSync(p)) {
-        indexPath = p;
-        break;
-      }
-    }
-
+    const paths = [path.join(process.cwd(), 'dist', 'templ.html'), path.join(process.cwd(), 'dist', 'index.html'), path.join(process.cwd(), 'index.html')];
+    let indexPath = paths.find(p => fs.existsSync(p)) || '';
     if (!indexPath) return next();
     
     let html = fs.readFileSync(indexPath, 'utf-8');
-    let title = 'Smart Cartão';
-    let description = 'Crie seu cartão digital agora';
-    
+    let title = 'Smart Cartão', description = 'Crie seu cartão digital agora';
     const { data: settings } = await supabase.from('system_settings').select('*').eq('id', 1).single();
     let image = settings?.default_logo || 'https://smartcartao.com/og-default.png';
 
@@ -315,19 +234,13 @@ app.get(['/', '/login', '/register', '/admin', '/admin/*', '/dashboard', '/dashb
       if (profile) {
         title = isCatalog ? `Catálogo | ${profile.display_name}` : `${profile.display_name} - Smart Cartão`;
         description = profile.role_title || 'Meu Cartão Digital';
-        image = profile.profile_image || profile.profile_banner_image || image;
+        image = profile.profile_image || image;
       }
     }
     
-    html = html.replaceAll('{{title}}', title)
-               .replaceAll('{{description}}', description)
-               .replaceAll('{{image}}', image);
-    
     res.setHeader('Content-Type', 'text/html');
-    return res.status(200).send(html);
-  } catch (err) {
-    next();
-  }
+    return res.status(200).send(html.replaceAll('{{title}}', title).replaceAll('{{description}}', description).replaceAll('{{image}}', image));
+  } catch (err) { next(); }
 });
 
 export default app;
