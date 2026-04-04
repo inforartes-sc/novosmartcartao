@@ -84,8 +84,8 @@ export default function Onboarding() {
         const data = await res.json();
         toast.error(data.error || 'Erro ao enviar formulário');
       }
-    } catch (err) {
-      toast.error('Erro de conexão');
+    } catch (err: any) {
+      toast.error(`Falha de Conexão: ${err.message || 'Verifique o servidor'}`);
     } finally {
       setLoading(false);
     }
