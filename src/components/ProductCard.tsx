@@ -154,29 +154,29 @@ export default function ProductCard({
         
         {/* Real Estate Technical Icons */}
         {isRealEstate && (
-          <div className="flex items-center justify-center gap-3 mb-6 flex-wrap px-2">
+          <div className="flex items-center justify-between w-full mb-6 border-y border-gray-100/50 py-2">
             {product.area && (
-              <div className="flex items-center gap-1 text-[10px] font-bold text-gray-500 uppercase">
-                <Maximize className="w-3 h-3 text-gray-400" />
-                {product.area}m²
+              <div className="flex flex-col items-center gap-0.5 flex-1">
+                <Maximize className="w-3.5 h-3.5 text-red-600" />
+                <span className="text-[10px] font-black text-red-700 uppercase">{product.area}m²</span>
               </div>
             )}
             {product.bedrooms && (
-              <div className="flex items-center gap-1 text-[10px] font-bold text-gray-500 uppercase border-l border-gray-100 pl-3">
-                <Bed className="w-3 h-3 text-gray-400" />
-                {product.bedrooms}
+              <div className="flex flex-col items-center gap-0.5 flex-1 border-l border-gray-100">
+                <Bed className="w-3.5 h-3.5 text-red-600" />
+                <span className="text-[10px] font-black text-red-700 uppercase">{product.bedrooms}</span>
               </div>
             )}
             {product.bathrooms && (
-              <div className="flex items-center gap-1 text-[10px] font-bold text-gray-500 uppercase border-l border-gray-100 pl-3">
-                <Bath className="w-3 h-3 text-gray-400" />
-                {product.bathrooms}
+              <div className="flex flex-col items-center gap-0.5 flex-1 border-l border-gray-100">
+                <Bath className="w-3.5 h-3.5 text-red-600" />
+                <span className="text-[10px] font-black text-red-700 uppercase">{product.bathrooms}</span>
               </div>
             )}
             {product.parking_spaces && (
-              <div className="flex items-center gap-1 text-[10px] font-bold text-gray-500 uppercase border-l border-gray-100 pl-3">
-                <Car className="w-3 h-3 text-gray-400" />
-                {product.parking_spaces}
+              <div className="flex flex-col items-center gap-0.5 flex-1 border-l border-gray-100">
+                <Car className="w-3.5 h-3.5 text-red-600" />
+                <span className="text-[10px] font-black text-red-700 uppercase">{product.parking_spaces}</span>
               </div>
             )}
           </div>
