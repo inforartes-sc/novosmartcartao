@@ -109,12 +109,16 @@ app.get('/api/public/plans', async (req, res) => {
 
 app.get('/api/admin/stats', authenticateMaster, async (req, res) => {
   try {
-    const userRes = await supabase.from('profiles').select('id, username, is_admin, plan_id, status, views');
-    const userProfiles = userRes.data || [];
+    const { data: profiles, error: pError } = await supabase.from('profiles').select('id, username, is_admin, plan_id, status, views, created_at');
+    if (pError) throw pError;
+
+    const userProfiles = profiles || [];
     const { data: plans } = await supabase.from('plans').select('*');
-    const { data: authUsers } = await supabase.auth.admin.listUsers();
+    
+    // Simplificando contagem de novos usuários usando o campo created_at do banco
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const newUsersCount = userProfiles.filter(u => u.created_at && new Date(u.created_at) > thirtyDaysAgo).length;
 
     res.json({ 
       userCount: userProfiles.length, 
@@ -125,11 +129,14 @@ app.get('/api/admin/stats', authenticateMaster, async (req, res) => {
         name: p.name,
         count: userProfiles.filter(u => u.plan_id && Number(u.plan_id) === Number(p.id)).length
       })),
-      newUsersCount: (authUsers?.users || []).filter(u => new Date(u.created_at) > thirtyDaysAgo).length,
+      newUsersCount,
       activeCount: userProfiles.filter(u => u.status === 'active').length,
       inactiveCount: userProfiles.filter(u => u.status !== 'active').length
     });
-  } catch (err: any) { res.status(400).json({ error: err.message }); }
+  } catch (err: any) {
+    console.error('[STATS-ERROR]', err);
+    res.status(500).json({ error: 'Erro ao processar estatísticas' });
+  }
 });
 
 // Onboarding
@@ -140,8 +147,18 @@ app.post('/api/public/onboarding', async (req, res) => {
 });
 
 app.get('/api/admin/onboarding', authenticateMaster, async (req, res) => {
-  const { data, error } = await supabase.from('onboarding_submissions').select('*').order('created_at', { ascending: false });
-  res.json(data || []);
+  try {
+    const { data, error } = await supabase
+      .from('onboarding_submissions')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err: any) {
+    console.error('[ONBOARDING-FETCH-ERROR]', err);
+    res.status(500).json({ error: 'Erro ao buscar submissões' });
+  }
 });
 
 app.delete('/api/admin/onboarding/:id', authenticateMaster, async (req, res) => {
