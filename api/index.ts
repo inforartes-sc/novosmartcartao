@@ -20,28 +20,14 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE, {
   auth: { autoRefreshToken: false, persistSession: false }
 });
 
-// View Cooldown Cache
 const viewCache: Record<string, number> = {};
-const VIEW_COOLDOWN = 60 * 60 * 1000; // 1 hour
+const VIEW_COOLDOWN = 60 * 60 * 1000;
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 
-// Webhook Debug Logger
-const addWebhookLog = async (data: any) => {
-  try {
-    await supabase.from('webhook_logs').insert([{
-      event: data.event,
-      payload: data.body,
-      headers: data.headers
-    }]);
-  } catch (err) {
-    console.error('[DEBUG-LOG] Failed to save webhook log:', err);
-  }
-};
-
-// Auth Middlewares
+// Auth & Permissions
 const authenticate = (req: any, res: any, next: any) => {
   const token = req.cookies.token;
   if (!token) return res.status(401).json({ error: 'Não autorizado' });
@@ -60,66 +46,49 @@ const authenticateMaster = async (req: any, res: any, next: any) => {
   try {
     const decoded: any = jwt.verify(token, JWT_SECRET);
     const { data: profile } = await supabase.from('profiles').select('*').eq('id', decoded.id).single();
-    const isMaster = profile?.username === 'admin' || profile?.is_admin === true;
-    if (!isMaster) return res.status(403).json({ error: 'Acesso negado Master' });
-    req.user = decoded;
-    next();
+    if (profile?.username === 'admin' || (profile as any)?.is_admin === true) {
+      req.user = decoded;
+      return next();
+    }
+    res.status(403).json({ error: 'Acesso negado' });
   } catch (err) {
     res.status(401).json({ error: 'Sessão inválida' });
   }
 };
 
-// --- API ROUTES (SYNCED WITH SERVER.TS) ---
+// --- ROUTES ---
 
-app.get('/api/settings', async (req, res) => {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  const { data, error } = await supabase.from('system_settings').select('*').eq('id', 1).single();
+// Master Users
+app.get('/api/admin/users', authenticateMaster, async (req, res) => {
+  const { data, error } = await supabase.from('profiles').select('*').order('username');
   if (error) return res.status(400).json({ error: error.message });
   res.json(data);
 });
 
-app.get('/api/public/settings', async (req, res) => {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  const { data, error } = await supabase.from('system_settings').select('*').eq('id', 1).single();
-  res.json(data || {});
-});
-
-app.get('/api/admin/settings', authenticateMaster, async (req, res) => {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  const { data, error } = await supabase.from('system_settings').select('*').eq('id', 1).single();
-  res.json(data);
-});
-
-app.put('/api/admin/settings', authenticateMaster, async (req, res) => {
-  const { error } = await supabase.from('system_settings').update(req.body).eq('id', 1);
+app.delete('/api/admin/users/:id', authenticateMaster, async (req, res) => {
+  const { error } = await supabase.auth.admin.deleteUser(req.params.id);
   if (error) return res.status(400).json({ error: error.message });
   res.json({ success: true });
 });
 
-// Stats, Testimonials, Plans
-app.get('/api/testimonials', async (req, res) => {
-  const { data, error } = await supabase.from('testimonials').select('*').order('created_at', { ascending: false });
-  res.json(data || []);
+app.put('/api/admin/users/:id/update', authenticateMaster, async (req: any, res) => {
+  const { error } = await supabase.from('profiles').update({ ...req.body, updated_at: new Date() }).eq('id', req.params.id);
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ success: true });
 });
 
-app.get('/api/public/plans', async (req, res) => {
-  const { data: plans, error } = await supabase.from('plans').select('*').order('id', { ascending: true });
-  res.json(plans || []);
+app.put('/api/admin/users/:id/password', authenticateMaster, async (req: any, res) => {
+  const { error } = await supabase.auth.admin.updateUserById(req.params.id, { password: req.body.password });
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ success: true });
 });
 
+// Stats
 app.get('/api/admin/stats', authenticateMaster, async (req, res) => {
   try {
-    const { data: profiles, error: pError } = await supabase.from('profiles').select('id, username, is_admin, plan_id, status, views, created_at');
-    if (pError) throw pError;
-
-    const userProfiles = profiles || [];
+    const { data: profiles } = await supabase.from('profiles').select('*');
     const { data: plans } = await supabase.from('plans').select('*');
-    
-    // Simplificando contagem de novos usuários usando o campo created_at do banco
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const newUsersCount = userProfiles.filter(u => u.created_at && new Date(u.created_at) > thirtyDaysAgo).length;
-
+    const userProfiles = profiles || [];
     res.json({ 
       userCount: userProfiles.length, 
       totalViews: userProfiles.reduce((acc, curr) => acc + (curr.views || 0), 0),
@@ -129,36 +98,55 @@ app.get('/api/admin/stats', authenticateMaster, async (req, res) => {
         name: p.name,
         count: userProfiles.filter(u => u.plan_id && Number(u.plan_id) === Number(p.id)).length
       })),
-      newUsersCount,
+      newUsersCount: userProfiles.filter(u => new Date(u.created_at || Date.now()) > new Date(Date.now() - 30*24*60*60*1000)).length,
       activeCount: userProfiles.filter(u => u.status === 'active').length,
       inactiveCount: userProfiles.filter(u => u.status !== 'active').length
     });
-  } catch (err: any) {
-    console.error('[STATS-ERROR]', err);
-    res.status(500).json({ error: 'Erro ao processar estatísticas' });
-  }
+  } catch (err: any) { res.status(400).json({ error: err.message }); }
 });
 
-// Onboarding
-app.post('/api/public/onboarding', async (req, res) => {
-  const { error } = await supabase.from('onboarding_submissions').insert([req.body]);
+// Settings & Plans
+app.get('/api/settings', async (req, res) => {
+  const { data } = await supabase.from('system_settings').select('*').eq('id', 1).single();
+  res.json(data);
+});
+
+app.get('/api/admin/settings', authenticateMaster, async (req, res) => {
+  const { data } = await supabase.from('system_settings').select('*').eq('id', 1).single();
+  res.json(data);
+});
+
+app.put('/api/admin/settings', authenticateMaster, async (req, res) => {
+  await supabase.from('system_settings').update(req.body).eq('id', 1);
+  res.json({ success: true });
+});
+
+app.get('/api/admin/plans', authenticateMaster, async (req, res) => {
+  const { data } = await supabase.from('plans').select('*').order('id');
+  res.json(data || []);
+});
+
+app.put('/api/admin/plans/:id', authenticateMaster, async (req, res) => {
+  const { error } = await supabase.rpc('update_plan_direct', { p_id: parseInt(req.params.id), ...req.body });
   if (error) return res.status(400).json({ error: error.message });
   res.json({ success: true });
 });
 
+app.post('/api/admin/plans', authenticateMaster, async (req, res) => {
+  const { data, error } = await supabase.from('plans').insert([req.body]).select().single();
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data);
+});
+
+// Onboarding
 app.get('/api/admin/onboarding', authenticateMaster, async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('onboarding_submissions')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (error) throw error;
-    res.json(data || []);
-  } catch (err: any) {
-    console.error('[ONBOARDING-FETCH-ERROR]', err);
-    res.status(500).json({ error: 'Erro ao buscar submissões' });
-  }
+  const { data } = await supabase.from('onboarding_submissions').select('*').order('created_at', { ascending: false });
+  res.json(data || []);
+});
+
+app.post('/api/public/onboarding', async (req, res) => {
+  await supabase.from('onboarding_submissions').insert([req.body]);
+  res.json({ success: true });
 });
 
 app.delete('/api/admin/onboarding/:id', authenticateMaster, async (req, res) => {
@@ -166,7 +154,7 @@ app.delete('/api/admin/onboarding/:id', authenticateMaster, async (req, res) => 
   res.json({ success: true });
 });
 
-// Auth & Profiles
+// Common Auth
 app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
   const email = username.includes('@') ? username : `${username}@smartcartao.com`;
@@ -179,29 +167,15 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 app.post('/api/auth/register', authenticateMaster, async (req, res) => {
-  const { username, password, display_name, role_title, slug, plan_id, profile_image } = req.body;
+  const { username, password, display_name, slug, profile_image } = req.body;
   try {
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: req.body.email || `${username}@smartcartao.com`,
-      password,
-      email_confirm: true
+      email: req.body.email || `${username}@smartcartao.com`, password, email_confirm: true
     });
     if (authError) throw authError;
-
-    let expiryDate = null;
-    if (plan_id) {
-       const { data: plan } = await supabase.from('plans').select('months').eq('id', plan_id).single();
-       if (plan) {
-         const d = new Date();
-         d.setMonth(d.getMonth() + plan.months);
-         expiryDate = d.toISOString().split('T')[0];
-       }
-    }
-
     await supabase.from('profiles').insert({ 
-      id: authData.user.id, username, display_name, role_title, slug,
-      profile_image, documento: req.body.documento || req.body.cpf,
-      plan_id, expiry_date: expiryDate, niche: req.body.niche || 'vehicle', status: 'active'
+      id: authData.user.id, username, display_name, slug, profile_image,
+      documento: req.body.documento || req.body.cpf, niche: req.body.niche || 'vehicle', status: 'active'
     });
     res.json({ id: authData.user.id });
   } catch (err: any) { res.status(400).json({ error: err.message }); }
@@ -209,11 +183,10 @@ app.post('/api/auth/register', authenticateMaster, async (req, res) => {
 
 app.get('/api/me', authenticate, async (req: any, res) => {
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', req.user.id).single();
-  if (!profile) return res.status(404).json({ error: 'Não encontrado' });
-  res.json({ ...profile, is_admin: profile.is_admin || profile.username === 'admin' });
+  res.json({ ...profile, is_admin: profile?.is_admin || profile?.username === 'admin' });
 });
 
-// Products
+// Products & Profile
 app.get('/api/products', authenticate, async (req: any, res) => {
   const { data } = await supabase.from('products').select('*').eq('user_id', req.user.id);
   res.json(data || []);
@@ -227,36 +200,21 @@ app.get('/api/profile/:slug', async (req, res) => {
   res.json({ user: profile, products: (products || []).filter(p => p.is_active !== false) });
 });
 
-// --- SPA & METADATA FOR VERCEL ---
-app.get(['/', '/login', '/register', '/admin', '/admin/*', '/dashboard', '/dashboard/*', '/plans', '/onboarding', '/:slug', '/:slug/catalogo'], async (req, res, next) => {
+// Vercel SPA Metadata
+app.get(['/', '/login', '/register', '/admin', '/admin/*', '/dashboard', '/dashboard/*', '/plans', '/onboarding', '/:slug'], async (req, res, next) => {
   if (req.url.startsWith('/api/') || req.url.includes('.')) return next();
-
-  const { slug } = req.params;
-  const isCatalog = req.path.endsWith('/catalogo');
-  const reserved = ['login', 'register', 'admin', 'dashboard', 'api', 'plans', 'onboarding', 'assets'];
-  const isProfileSlug = slug && !reserved.includes(slug.toLowerCase()) && !req.url.includes('/', 1);
-  
   try {
     const paths = [path.join(process.cwd(), 'dist', 'templ.html'), path.join(process.cwd(), 'dist', 'index.html'), path.join(process.cwd(), 'index.html')];
     let indexPath = paths.find(p => fs.existsSync(p)) || '';
     if (!indexPath) return next();
-    
     let html = fs.readFileSync(indexPath, 'utf-8');
-    let title = 'Smart Cartão', description = 'Crie seu cartão digital agora';
-    const { data: settings } = await supabase.from('system_settings').select('*').eq('id', 1).single();
-    let image = settings?.default_logo || 'https://smartcartao.com/og-default.png';
-
-    if (isProfileSlug) {
-      const { data: profile } = await supabase.from('profiles').select('*').ilike('slug', slug).single();
-      if (profile) {
-        title = isCatalog ? `Catálogo | ${profile.display_name}` : `${profile.display_name} - Smart Cartão`;
-        description = profile.role_title || 'Meu Cartão Digital';
-        image = profile.profile_image || image;
-      }
-    }
-    
+    const { data: profile } = req.params.slug ? await supabase.from('profiles').select('*').ilike('slug', req.params.slug).single() : { data: null };
+    const { data: settings } = await supabase.from('system_settings').select('default_logo').eq('id', 1).single();
     res.setHeader('Content-Type', 'text/html');
-    return res.status(200).send(html.replaceAll('{{title}}', title).replaceAll('{{description}}', description).replaceAll('{{image}}', image));
+    return res.status(200).send(html
+      .replaceAll('{{title}}', profile?.display_name ? `${profile.display_name} - Smart Cartão` : 'Smart Cartão')
+      .replaceAll('{{description}}', profile?.role_title || 'Crie seu cartão digital agora')
+      .replaceAll('{{image}}', profile?.profile_image || settings?.default_logo || 'https://smartcartao.com/og-default.png'));
   } catch (err) { next(); }
 });
 
