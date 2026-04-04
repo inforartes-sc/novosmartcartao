@@ -1,7 +1,7 @@
 import React, { useState, useEffect, ReactNode } from 'react';
 import { Product } from '../types';
 import { motion } from 'motion/react';
-import { MessageCircle, Info, FileText, Calculator, CreditCard, ChevronLeft, ChevronRight, Package, Check } from 'lucide-react';
+import { MessageCircle, Info, FileText, Calculator, CreditCard, ChevronLeft, ChevronRight, Package, Check, MapPin } from 'lucide-react';
 import Modal from './Modal';
 import FinancingForm from './FinancingForm';
 import ThreeSixtyViewer from './ThreeSixtyViewer';
@@ -15,6 +15,25 @@ export interface ProductCardProps {
   onCloseModal?: () => void;
   allProducts?: Product[];
 }
+
+const formatPrice = (value: string | number | undefined) => {
+  if (value === undefined || value === null || value === '') return '';
+  const str = value.toString();
+  
+  // Se já tiver vírgula e ponto (ex: 1.250,00), assume que já está formatado
+  if (str.includes(',') && str.includes('.')) return str;
+  
+  // Se for string com vírgula mas sem ponto (ex: 1250,00), tenta ajustar
+  let clean = str;
+  if (str.includes(',') && !str.includes('.')) {
+    clean = str.replace(',', '.');
+  }
+
+  const num = typeof value === 'number' ? value : parseFloat(clean.replace(/[^\d.-]/g, ''));
+  if (isNaN(num)) return str;
+  
+  return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
+};
 
 export default function ProductCard({ 
   product, 
@@ -30,12 +49,16 @@ export default function ProductCard({
   const [isAutoPlayPaused, setIsAutoPlayPaused] = useState(false);
   const [selectedFinancingIndex, setSelectedFinancingIndex] = useState<number | null>(null);
 
+  const isRealEstate = product.niche === 'realestate';
+
   const themeColor = primaryColor || '#003da5';
   const allImages = [product.image, ...(product.images || [])];
 
   const handleWhatsApp = () => {
     const phone = whatsappNumber || '5597984094999';
-    const message = `Olá! Vim pelo seu Cartão Digital. Tenho interesse no veículo ${product.name}. Pode falar mais sobre ele?`;
+    const message = isRealEstate 
+      ? `Olá! Vem pelo seu Cartão Digital. Tenho interesse no imóvel ${product.name}. Pode falar mais sobre ele?`
+      : `Olá! Vem pelo seu Cartão Digital. Tenho interesse no veículo ${product.name}. Pode falar mais sobre ele?`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
     
     // Log the interaction as a 'sale' intent
@@ -120,7 +143,7 @@ export default function ProductCard({
             className="w-full py-2 px-4 text-white rounded-md transition-all text-xs font-bold uppercase hover:brightness-110"
             style={{ backgroundColor: themeColor }}
           >
-            Sobre o veículo
+            {isRealEstate ? 'Sobre o imóvel' : 'Sobre o veículo'}
           </button>
           
           {(product.has_consortium !== false || product.show_financing_plans) && (
@@ -136,7 +159,7 @@ export default function ProductCard({
             onClick={() => setActiveModal('financing')}
             className="w-full py-2 px-4 bg-[#a8328f] hover:bg-[#8a2975] text-white rounded-md transition-colors text-xs font-bold uppercase"
           >
-            Simular Financiamento
+            {isRealEstate ? 'Simular Financiamento' : 'Simular Financiamento'}
           </button>
 
           {product.hasLiberacred && (
@@ -164,7 +187,7 @@ export default function ProductCard({
         onClose={handleModalClose}
         title={
           <div className="flex flex-col pt-2">
-            <span className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mb-1">Sobre o Veículo</span>
+            <span className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mb-1">{isRealEstate ? 'Sobre o Imóvel' : 'Sobre o Veículo'}</span>
             <span className="text-xl font-black text-gray-900 uppercase tracking-tight leading-tight">{product.name}</span>
           </div>
         }
@@ -216,55 +239,129 @@ export default function ProductCard({
             </div>
           )}
           
-            {/* Detalhes do Veículo */}
+            {/* Detalhes do Veículo / Imóvel */}
             <div className="grid grid-cols-2 gap-4 py-4 border-y border-gray-100">
-              {product.year && (
-                <div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase">Ano</p>
-                  <p className="text-sm font-bold text-gray-800">{product.year}</p>
-                </div>
-              )}
-              {product.price && (
-                <div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase">Preço</p>
-                  <p className="text-sm font-bold text-emerald-600">R$ {product.price}</p>
-                </div>
-              )}
-              {product.mileage && (
-                <div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase">Quilometragem</p>
-                  <p className="text-sm font-bold text-gray-800">{product.mileage} km</p>
-                </div>
-              )}
-              {product.brand && (
-                <div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase">Marca</p>
-                  <p className="text-sm font-bold text-gray-800">{product.brand}</p>
-                </div>
-              )}
-              {product.condition && (
-                <div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase">Condição</p>
-                  <p className="text-sm font-bold text-gray-800">{product.condition}</p>
-                </div>
-              )}
-              {product.fuel && (
-                <div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase">Combustível</p>
-                  <p className="text-sm font-bold text-gray-800">{product.fuel}</p>
-                </div>
-              )}
-              {product.transmission && (
-                <div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase">Câmbio</p>
-                  <p className="text-sm font-bold text-gray-800">{product.transmission}</p>
-                </div>
-              )}
-              {product.color && (
-                <div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase">Cor</p>
-                  <p className="text-sm font-bold text-gray-800">{product.color}</p>
-                </div>
+              {isRealEstate ? (
+                <>
+                  {product.property_type && (
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">Tipo</p>
+                      <p className="text-sm font-bold text-gray-800">{product.property_type}</p>
+                    </div>
+                  )}
+                  {product.price && (
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">Preço</p>
+                      <p className="text-sm font-bold text-emerald-600">R$ {formatPrice(product.price)}</p>
+                    </div>
+                  )}
+                  {product.condo_fee && (
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">Condomínio</p>
+                      <p className="text-sm font-bold text-gray-800">R$ {formatPrice(product.condo_fee)}</p>
+                    </div>
+                  )}
+                  {product.iptu && (
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">IPTU</p>
+                      <p className="text-sm font-bold text-gray-800">R$ {formatPrice(product.iptu)}</p>
+                    </div>
+                  )}
+                  {product.area && (
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">Área</p>
+                      <p className="text-sm font-bold text-gray-800">{product.area} m²</p>
+                    </div>
+                  )}
+                  {product.bedrooms && (
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">Quartos</p>
+                      <p className="text-sm font-bold text-gray-800">{product.bedrooms}</p>
+                    </div>
+                  )}
+                  {product.bathrooms && (
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">Banheiros</p>
+                      <p className="text-sm font-bold text-gray-800">{product.bathrooms}</p>
+                    </div>
+                  )}
+                  {product.parking_spaces && (
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">Vagas</p>
+                      <p className="text-sm font-bold text-gray-800">{product.parking_spaces}</p>
+                    </div>
+                  )}
+                  {product.location && (
+                    <div className="col-span-2 flex flex-col gap-2">
+                      <div>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase">Localização</p>
+                        <p className="text-sm font-bold text-gray-800">{product.location}</p>
+                      </div>
+                      {product.map_url && (
+                        <a 
+                          href={product.map_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 transition-colors py-1.5 w-fit"
+                        >
+                          <MapPin className="w-4 h-4" />
+                          <span className="text-xs font-bold uppercase border-b border-blue-600/30">Ver no Google Maps</span>
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  {product.year && (
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">Ano</p>
+                      <p className="text-sm font-bold text-gray-800">{product.year}</p>
+                    </div>
+                  )}
+                  {product.price && (
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">Preço</p>
+                      <p className="text-sm font-bold text-emerald-600">R$ {formatPrice(product.price)}</p>
+                    </div>
+                  )}
+                  {product.mileage && (
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">Quilometragem</p>
+                      <p className="text-sm font-bold text-gray-800">{product.mileage} km</p>
+                    </div>
+                  )}
+                  {product.brand && (
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">Marca</p>
+                      <p className="text-sm font-bold text-gray-800">{product.brand}</p>
+                    </div>
+                  )}
+                  {product.condition && (
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">Condição</p>
+                      <p className="text-sm font-bold text-gray-800">{product.condition}</p>
+                    </div>
+                  )}
+                  {product.fuel && (
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">Combustível</p>
+                      <p className="text-sm font-bold text-gray-800">{product.fuel}</p>
+                    </div>
+                  )}
+                  {product.transmission && (
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">Câmbio</p>
+                      <p className="text-sm font-bold text-gray-800">{product.transmission}</p>
+                    </div>
+                  )}
+                  {product.color && (
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">Cor</p>
+                      <p className="text-sm font-bold text-gray-800">{product.color}</p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
@@ -276,7 +373,7 @@ export default function ProductCard({
                   Opcionais e Itens de Série
                 </h4>
                 <div className="grid grid-cols-2 gap-2">
-                  {(typeof product.optionals === 'string' ? JSON.parse(product.optionals) : product.optionals).map((opt: string) => (
+                  {(typeof product.optionals === 'string' ? JSON.parse(product.optionals) : (product.optionals || [])).map((opt: string) => (
                     <div key={opt} className="flex items-center gap-2 text-[11px] text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-100">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
                       {opt}
@@ -286,22 +383,28 @@ export default function ProductCard({
               </div>
             )}
 
-            <div className="space-y-4">
-              <h4 className="font-bold text-lg">Cores Disponíveis</h4>
-              <div className="flex gap-3">
-                {product.colors.map(color => (
-                  <div
-                    key={color}
-                    className="w-8 h-8 rounded-full border border-gray-200 shadow-sm"
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
+            {product.niche !== 'realestate' && product.colors && product.colors.length > 0 && (
+              <div className="space-y-4">
+                <h4 className="font-bold text-lg">Cores Disponíveis</h4>
+                <div className="flex gap-3">
+                  {product.colors?.map(color => (
+                    <div
+                      key={color}
+                      className="w-8 h-8 rounded-full border border-gray-200 shadow-sm"
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
               </div>
+            )}
+            <div className="pt-4 border-t border-gray-100">
+              <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 text-left">DESCRIÇÃO DETALHADA</h4>
               <div className="prose prose-sm max-w-none">
-                <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">
+                <p className="text-gray-600 leading-relaxed whitespace-pre-wrap text-left">
                   {product.description}
                 </p>
               </div>
+            </div>
             </div>
             <button
               onClick={handleWhatsApp}
@@ -311,7 +414,6 @@ export default function ProductCard({
               <MessageCircle className="w-6 h-6" />
               SOLICITAR CONSULTORIA NO WHATSAPP
             </button>
-          </div>
         </Modal>
 
       <Modal
@@ -434,7 +536,7 @@ export default function ProductCard({
             </div>
           ) : (!product.show_consortium_plans && !product.show_financing_plans) && (
             <div className="p-8 text-center text-gray-400 text-sm italic">
-              Informações de planos indisponíveis para este veículo.
+              Informações de planos indisponíveis para este {isRealEstate ? 'imóvel' : 'veículo'}.
             </div>
           )}
 

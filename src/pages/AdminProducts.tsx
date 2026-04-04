@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { uploadImage } from '../lib/supabase';
 import { motion } from 'motion/react';
-import { Plus, Trash2, Package, Camera, Loader2, Edit2, X, Check, Copy, Calculator, Search } from 'lucide-react';
+import { Plus, Trash2, Package, Camera, Loader2, Edit2, X, Check, Copy, Calculator, Search, Home as HomeIcon, MapPin, Maximize, Bed, Bath, Car, ArrowRightLeft } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<any[]>([]);
@@ -14,6 +15,9 @@ export default function AdminProducts() {
   const [newColor, setNewColor] = useState('#000000');
   const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean; title: string; onConfirm: () => void } | null>(null);
   
+  const { user } = useAuth();
+  const userNiche = user?.niche || 'vehicle';
+
   const VEHICLE_OPTIONALS = [
     'Ar Condicionado', 'Direção Hidráulica', 'Direção Elétrica', 'Vidros Elétricos',
     'Travas Elétricas', 'Alarme', 'Air Bag', 'Air Bag Duplo',
@@ -25,6 +29,22 @@ export default function AdminProducts() {
     'Para-choques na cor do veiculo', 'IPVA Pago', 'Único Dono', 'Revisões em Dia',
     'Manual do Proprietário', 'Chave Reserva'
   ];
+
+  const REAL_ESTATE_OPTIONALS = [
+    'Piscina', 'Churrasqueira', 'Academia', 'Salão de Festas', 'Portaria 24h', 'Sistema de Alarme',
+    'Elevador', 'Varanda', 'Varanda Gourmet', 'Mobiliado', 'Ar Condicionado', 'Quintal', 
+    'Jardim', 'Lareira', 'Closet', 'Copa', 'Despensa', 'Escritório', 'Mezanino',
+    'Dependência de Empregada', 'Área de Serviço', 'Gás Encanado', 'Interfone',
+    'Armários na Cozinha', 'Armários no Banheiro', 'Armários nos Quartos',
+    'Próximo ao Metrô', 'Próximo a Shopping', 'Pet Friendly', 'Acesso para Deficientes',
+    'Vista Panorâmica', 'Vista para o Mar'
+  ];
+
+  const PROPERTY_TYPES = [
+    'Casa', 'Apartamento', 'Sobrado', 'Terreno', 'Galpão', 'Loja', 'Sala Comercial', 'Rural', 'Chácara', 'Sítio'
+  ];
+
+  const CURRENT_OPTIONALS = userNiche === 'realestate' ? REAL_ESTATE_OPTIONALS : VEHICLE_OPTIONALS;
 
   const [formState, setFormState] = useState({
     name: '',
@@ -53,7 +73,21 @@ export default function AdminProducts() {
     cash_price: '',
     card_installments: '',
     card_interest: true,
-    is_active: true
+    is_active: true,
+    niche: userNiche,
+    // Real Estate Fields
+    property_type: 'Casa',
+    bedrooms: '',
+    bathrooms: '',
+    suites: '',
+    parking_spaces: '',
+    area: '',
+    location: '',
+    is_for_sale: true,
+    is_for_rent: false,
+    condo_fee: '',
+    iptu: '',
+    map_url: ''
   });
 
   const [newPlan, setNewPlan] = useState({ installments: 0, value: '' });
@@ -180,7 +214,20 @@ export default function AdminProducts() {
       cash_price: product.cash_price || '',
       card_installments: (product.card_installments || '').replace('x', ''),
       card_interest: product.card_interest === true || product.card_interest === 1 || String(product.card_interest) === 'true',
-      is_active: product.is_active !== false
+      is_active: product.is_active !== false,
+      niche: product.niche || 'vehicle',
+      property_type: product.property_type || 'Casa',
+      bedrooms: product.bedrooms || '',
+      bathrooms: product.bathrooms || '',
+      suites: product.suites || '',
+      parking_spaces: product.parking_spaces || '',
+      area: product.area || '',
+      location: product.location || '',
+      is_for_sale: product.is_for_sale !== false,
+      is_for_rent: !!product.is_for_rent,
+      condo_fee: product.condo_fee || '',
+      iptu: product.iptu || '',
+      map_url: product.map_url || ''
     });
     setShowAddForm(true);
   };
@@ -214,11 +261,23 @@ export default function AdminProducts() {
       cash_price: product.cash_price || '',
       card_installments: (product.card_installments || '').replace('x', ''),
       card_interest: product.card_interest === true || product.card_interest === 1 || String(product.card_interest) === 'true',
-      is_active: product.is_active !== false
+      is_active: product.is_active !== false,
+      niche: product.niche || 'vehicle',
+      property_type: product.property_type || 'Casa',
+      bedrooms: product.bedrooms || '',
+      bathrooms: product.bathrooms || '',
+      suites: product.suites || '',
+      parking_spaces: product.parking_spaces || '',
+      area: product.area || '',
+      location: product.location || '',
+      is_for_sale: product.is_for_sale !== false,
+      is_for_rent: !!product.is_for_rent,
+      condo_fee: product.condo_fee || '',
+      iptu: product.iptu || '',
+      map_url: product.map_url || ''
     });
     setShowAddForm(true);
   };
-
   const closeForm = () => {
     setShowAddForm(false);
     setEditingId(null);
@@ -249,7 +308,20 @@ export default function AdminProducts() {
       cash_price: '',
       card_installments: '',
       card_interest: true,
-      is_active: true
+      is_active: true,
+      niche: userNiche,
+      property_type: 'Casa',
+      bedrooms: '',
+      bathrooms: '',
+      suites: '',
+      parking_spaces: '',
+      area: '',
+      location: '',
+      is_for_sale: true,
+      is_for_rent: false,
+      condo_fee: '',
+      iptu: '',
+      map_url: ''
     });
     setNewPlan({ installments: 0, value: '' });
     setNewFinancingPlan({ down_payment: '', installments: 0, value: '' });
@@ -444,121 +516,251 @@ export default function AdminProducts() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">Nome do Veículo *</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">{userNiche === 'realestate' ? 'Título do Imóvel *' : 'Nome do Veículo *'}</label>
                 <input
                   type="text"
                   required
                   value={formState.name}
                   onChange={(e) => setFormState({ ...formState, name: e.target.value })}
                   className="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all"
-                  placeholder="Ex: KM-HAKA"
+                  placeholder={userNiche === 'realestate' ? "Ex: Apartamento no Centro" : "Ex: KM-HAKA"}
                 />
               </div>
 
-              {/* Informações do Veículo */}
+              {/* Informações do Veículo / Imóvel */}
               <div className="bg-gray-50/50 p-6 rounded-3xl border border-gray-100 space-y-6">
                 <div className="flex items-center gap-2 mb-2">
-                  <Edit2 className="w-5 h-5 text-gray-400" />
-                  <h3 className="text-lg font-bold text-gray-800">Informações do Veículo</h3>
+                  {userNiche === 'realestate' ? <HomeIcon className="w-5 h-5 text-gray-400" /> : <Edit2 className="w-5 h-5 text-gray-400" />}
+                  <h3 className="text-lg font-bold text-gray-800">{userNiche === 'realestate' ? 'Detalhes do Imóvel' : 'Informações do Veículo'}</h3>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Ano</label>
-                    <input
-                      type="text"
-                      value={formState.year}
-                      onChange={(e) => setFormState({ ...formState, year: e.target.value })}
-                      placeholder="Ex: 2026"
-                      className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Preço (R$)</label>
-                    <input
-                      type="text"
-                      value={formState.price}
-                      onChange={handlePriceChange}
-                      placeholder="0,00"
-                      className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Quilometragem (km)</label>
-                    <input
-                      type="text"
-                      value={formState.mileage}
-                      onChange={(e) => setFormState({ ...formState, mileage: e.target.value })}
-                      placeholder="Opcional"
-                      className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    />
-                  </div>
-                </div>
+                {userNiche === 'vehicle' ? (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Ano</label>
+                        <input
+                          type="text"
+                          value={formState.year}
+                          onChange={(e) => setFormState({ ...formState, year: e.target.value })}
+                          placeholder="Ex: 2026"
+                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Preço (R$)</label>
+                        <input
+                          type="text"
+                          value={formState.price}
+                          onChange={handlePriceChange}
+                          placeholder="0,00"
+                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Quilometragem (km)</label>
+                        <input
+                          type="text"
+                          value={formState.mileage}
+                          onChange={(e) => setFormState({ ...formState, mileage: e.target.value })}
+                          placeholder="Opcional"
+                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        />
+                      </div>
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Marca</label>
-                    <input
-                      type="text"
-                      value={formState.brand}
-                      onChange={(e) => setFormState({ ...formState, brand: e.target.value })}
-                      placeholder="Ex: Mobtec"
-                      className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Condição</label>
-                    <select
-                      value={formState.condition}
-                      onChange={(e) => setFormState({ ...formState, condition: e.target.value })}
-                      className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none"
-                    >
-                      <option value="Novo">Novo</option>
-                      <option value="Seminovo">Seminovo</option>
-                      <option value="Usado">Usado</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Combustível</label>
-                    <select
-                      value={formState.fuel}
-                      onChange={(e) => setFormState({ ...formState, fuel: e.target.value })}
-                      className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none"
-                    >
-                      <option value="Gasolina">Gasolina</option>
-                      <option value="Etanol">Etanol</option>
-                      <option value="Flex">Flex</option>
-                      <option value="Diesel">Diesel</option>
-                      <option value="Elétrico">Elétrico</option>
-                      <option value="Híbrido">Híbrido</option>
-                    </select>
-                  </div>
-                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Marca</label>
+                        <input
+                          type="text"
+                          value={formState.brand}
+                          onChange={(e) => setFormState({ ...formState, brand: e.target.value })}
+                          placeholder="Ex: Mobtec"
+                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Condição</label>
+                        <select
+                          value={formState.condition}
+                          onChange={(e) => setFormState({ ...formState, condition: e.target.value })}
+                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none"
+                        >
+                          <option value="Novo">Novo</option>
+                          <option value="Seminovo">Seminovo</option>
+                          <option value="Usado">Usado</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Combustível</label>
+                        <select
+                          value={formState.fuel}
+                          onChange={(e) => setFormState({ ...formState, fuel: e.target.value })}
+                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none"
+                        >
+                          <option value="Gasolina">Gasolina</option>
+                          <option value="Etanol">Etanol</option>
+                          <option value="Flex">Flex</option>
+                          <option value="Diesel">Diesel</option>
+                          <option value="Elétrico">Elétrico</option>
+                          <option value="Híbrido">Híbrido</option>
+                        </select>
+                      </div>
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Câmbio</label>
-                    <select
-                      value={formState.transmission}
-                      onChange={(e) => setFormState({ ...formState, transmission: e.target.value })}
-                      className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none"
-                    >
-                      <option value="Manual">Manual</option>
-                      <option value="Automático">Automático</option>
-                      <option value="Semi-Automático">Semi-Automático</option>
-                    </select>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Câmbio</label>
+                        <select
+                          value={formState.transmission}
+                          onChange={(e) => setFormState({ ...formState, transmission: e.target.value })}
+                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none"
+                        >
+                          <option value="Manual">Manual</option>
+                          <option value="Automático">Automático</option>
+                          <option value="Semi-Automático">Semi-Automático</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Cor</label>
+                        <input
+                          type="text"
+                          value={formState.color}
+                          onChange={(e) => setFormState({ ...formState, color: e.target.value })}
+                          placeholder="Ex: Preta"
+                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Cor</label>
-                    <input
-                      type="text"
-                      value={formState.color}
-                      onChange={(e) => setFormState({ ...formState, color: e.target.value })}
-                      placeholder="Ex: Preta"
-                      className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    />
+                ) : (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Tipo de Imóvel</label>
+                        <select
+                          value={formState.property_type}
+                          onChange={(e) => setFormState({ ...formState, property_type: e.target.value })}
+                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none"
+                        >
+                          {PROPERTY_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Preço (R$)</label>
+                        <input
+                          type="text"
+                          value={formState.price}
+                          onChange={handlePriceChange}
+                          placeholder="0,00"
+                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase flex items-center gap-1"><Bed className="w-3 h-3" /> Quartos</label>
+                        <input
+                          type="number"
+                          value={formState.bedrooms}
+                          onChange={(e) => setFormState({ ...formState, bedrooms: e.target.value })}
+                          placeholder="0"
+                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase flex items-center gap-1"><Bath className="w-3 h-3" /> Banheiros</label>
+                        <input
+                          type="number"
+                          value={formState.bathrooms}
+                          onChange={(e) => setFormState({ ...formState, bathrooms: e.target.value })}
+                          placeholder="0"
+                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase flex items-center gap-1"><Check className="w-3 h-3" /> Suítes</label>
+                        <input
+                          type="number"
+                          value={formState.suites}
+                          onChange={(e) => setFormState({ ...formState, suites: e.target.value })}
+                          placeholder="0"
+                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase flex items-center gap-1"><Car className="w-3 h-3" /> Vagas</label>
+                        <input
+                          type="number"
+                          value={formState.parking_spaces}
+                          onChange={(e) => setFormState({ ...formState, parking_spaces: e.target.value })}
+                          placeholder="0"
+                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase flex items-center gap-1"><Maximize className="w-3 h-3" /> Área (m²)</label>
+                        <input
+                          type="number"
+                          value={formState.area}
+                          onChange={(e) => setFormState({ ...formState, area: e.target.value })}
+                          placeholder="Ex: 120"
+                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Localização / Bairro</label>
+                        <input
+                          type="text"
+                          value={formState.location}
+                          onChange={(e) => setFormState({ ...formState, location: e.target.value })}
+                          placeholder="Ex: Adrianópolis, Manaus"
+                          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 mb-1 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Link do Google Maps (Opcional)</label>
+                      <input
+                        type="url"
+                        value={formState.map_url}
+                        onChange={(e) => setFormState({ ...formState, map_url: e.target.value })}
+                        placeholder="https://goo.gl/maps/..."
+                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                      <p className="text-[10px] text-gray-400 mt-1 italic pl-1">Cole aqui o link de compartilhamento do Google Maps do imóvel.</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex items-center gap-2 p-3 bg-white border border-gray-100 rounded-xl">
+                        <input
+                          type="checkbox"
+                          id="is_for_sale"
+                          checked={formState.is_for_sale}
+                          onChange={(e) => setFormState({ ...formState, is_for_sale: e.target.checked })}
+                          className="w-5 h-5 text-blue-600 rounded"
+                        />
+                        <label htmlFor="is_for_sale" className="text-xs font-bold text-gray-600 uppercase">Disponível para Venda</label>
+                      </div>
+                      <div className="flex items-center gap-2 p-3 bg-white border border-gray-100 rounded-xl">
+                        <input
+                          type="checkbox"
+                          id="is_for_rent"
+                          checked={formState.is_for_rent}
+                          onChange={(e) => setFormState({ ...formState, is_for_rent: e.target.checked })}
+                          className="w-5 h-5 text-blue-600 rounded"
+                        />
+                        <label htmlFor="is_for_rent" className="text-xs font-bold text-gray-600 uppercase">Disponível para Aluguel</label>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -862,10 +1064,10 @@ export default function AdminProducts() {
                   <Package className="w-5 h-5 text-gray-400" />
                   <h3 className="text-lg font-bold text-gray-800">Opcionais</h3>
                 </div>
-                <p className="text-sm text-gray-500 mb-6">Selecione os opcionais disponíveis no veículo</p>
+                <p className="text-sm text-gray-500 mb-6">{userNiche === 'realestate' ? 'Selecione os opcionais e comodidades do imóvel' : 'Selecione os opcionais disponíveis no veículo'}</p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {VEHICLE_OPTIONALS.map((optional) => (
+                  {CURRENT_OPTIONALS.map((optional) => (
                     <label key={optional} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl cursor-pointer hover:border-blue-200 transition-all hover:shadow-sm">
                       <input
                         type="checkbox"
@@ -894,45 +1096,47 @@ export default function AdminProducts() {
                   value={formState.description}
                   onChange={(e) => setFormState({ ...formState, description: e.target.value })}
                   className="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all h-32 resize-none"
-                  placeholder="Fale sobre cilindrada, potência, tecnologias..."
+                  placeholder={userNiche === 'realestate' ? "Fale sobre a infraestrutura, pontos de interesse próximos, acabamento..." : "Fale sobre cilindrada, potência, tecnologias..."}
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">Cores Disponíveis</label>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {formState.colors.map(color => (
-                    <div key={color} className="group relative">
-                      <div 
-                        className="w-10 h-10 rounded-full border-2 border-white shadow-md cursor-pointer transition-transform hover:scale-110"
-                        style={{ backgroundColor: color }}
+              {userNiche !== 'realestate' && (
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">Cores Disponíveis</label>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {formState.colors.map(color => (
+                      <div key={color} className="group relative">
+                        <div 
+                          className="w-10 h-10 rounded-full border-2 border-white shadow-md cursor-pointer transition-transform hover:scale-110"
+                          style={{ backgroundColor: color }}
+                        />
+                        <button 
+                          type="button"
+                          onClick={() => removeColor(color)}
+                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                    <div className="flex items-center gap-2 ml-2">
+                      <input 
+                        type="color" 
+                        value={newColor} 
+                        onChange={(e) => setNewColor(e.target.value)}
+                        className="w-10 h-10 rounded-full bg-transparent border-none cursor-pointer p-0"
                       />
                       <button 
                         type="button"
-                        onClick={() => removeColor(color)}
-                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={addColor}
+                        className="p-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors text-gray-600"
                       >
-                        <X className="w-3 h-3" />
+                        <Plus className="w-4 h-4" /> Adicionar Cor
                       </button>
                     </div>
-                  ))}
-                  <div className="flex items-center gap-2 ml-2">
-                    <input 
-                      type="color" 
-                      value={newColor} 
-                      onChange={(e) => setNewColor(e.target.value)}
-                      className="w-10 h-10 rounded-full bg-transparent border-none cursor-pointer p-0"
-                    />
-                    <button 
-                      type="button"
-                      onClick={addColor}
-                      className="p-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors text-gray-600"
-                    >
-                      Adicionar Cor
-                    </button>
                   </div>
                 </div>
-              </div>
+              )}
 
               <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-100 rounded-2xl">
                 <input

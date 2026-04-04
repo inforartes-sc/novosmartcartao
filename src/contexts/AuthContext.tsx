@@ -8,6 +8,7 @@ interface User {
   role_title?: string;
   profile_image?: string;
   is_admin?: boolean;
+  niche?: 'vehicle' | 'realestate';
 }
 
 interface AuthContextType {

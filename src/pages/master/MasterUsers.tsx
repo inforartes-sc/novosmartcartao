@@ -28,7 +28,8 @@ export default function MasterUsers({ users, fetchUsers }: Props) {
     establishment: '',
     is_admin: false,
     documento: '',
-    email: ''
+    email: '',
+    niche: 'vehicle'
   });
   const [passForm, setPassForm] = useState('');
   const [updatingPass, setUpdatingPass] = useState(false);
@@ -44,7 +45,8 @@ export default function MasterUsers({ users, fetchUsers }: Props) {
     establishment: '',
     is_admin: false,
     documento: '',
-    email: ''
+    email: '',
+    niche: 'vehicle'
   });
 
   useEffect(() => {
@@ -98,7 +100,7 @@ export default function MasterUsers({ users, fetchUsers }: Props) {
       if (res.ok) {
         toast.success(`Usuário ${newUserData.username} criado com sucesso!`);
         setShowAddUser(false);
-        setNewUserData({ username: '', password: '', display_name: '', establishment: '', role_title: 'Consultor(a) Yamaha', slug: '', plan_id: '', expiry_date: '', is_admin: false, documento: '', email: '' });
+        setNewUserData({ username: '', password: '', display_name: '', establishment: '', role_title: 'Consultor(a) Yamaha', slug: '', plan_id: '', expiry_date: '', is_admin: false, documento: '', email: '', niche: 'vehicle' });
         fetchUsers();
       } else {
         const data = await res.json();
@@ -334,6 +336,21 @@ export default function MasterUsers({ users, fetchUsers }: Props) {
                 className="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
               />
             </div>
+            <div className="space-y-1">
+              <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest pl-1">Área de Atuação (Nicho)</label>
+              <select
+                value={newUserData.niche}
+                onChange={(e) => {
+                  const newNiche = e.target.value;
+                  const defaultRole = newNiche === 'realestate' ? 'Corretor(a) de Imóveis' : 'Consultor(a) Yamaha';
+                  setNewUserData({ ...newUserData, niche: newNiche, role_title: defaultRole } as any);
+                }}
+                className="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-blue-600"
+              >
+                <option value="vehicle">Revenda de Veículos</option>
+                <option value="realestate">Mercado Imobiliário</option>
+              </select>
+            </div>
             <div className="flex items-end">
               <button type="submit" className="w-full bg-blue-600 text-white font-black py-4 rounded-xl hover:bg-blue-700 transition-all uppercase tracking-widest text-[10px] shadow-lg shadow-blue-100">
                 Registrar e Integrar
@@ -466,7 +483,8 @@ export default function MasterUsers({ users, fetchUsers }: Props) {
                             establishment: u.establishment || '',
                             is_admin: u.is_admin === true,
                             documento: u.documento || u.cpf || '',
-                            email: u.email || ''
+                            email: u.email || '',
+                            niche: u.niche || 'vehicle'
                           });
                         }}
                         className="p-1.5 bg-gray-50 text-gray-400 hover:bg-blue-600 hover:text-white rounded-lg transition-all"
@@ -637,6 +655,17 @@ export default function MasterUsers({ users, fetchUsers }: Props) {
                       >
                          <option value="false">Consultor (Membro)</option>
                          <option value="true">Master Admin (Total)</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest pl-1">Área de Atuação (Nicho)</label>
+                      <select
+                        value={editForm.niche || 'vehicle'}
+                        onChange={(e) => setEditForm({ ...editForm, niche: e.target.value })}
+                        className="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-blue-600"
+                      >
+                        <option value="vehicle">Revenda de Veículos</option>
+                        <option value="realestate">Mercado Imobiliário</option>
                       </select>
                     </div>
                   </div>

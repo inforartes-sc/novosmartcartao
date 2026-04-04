@@ -178,6 +178,12 @@ export default function AdminProfile({ user, onUpdate }: AdminProfileProps) {
               className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nicho / Setor (Área de Atuação)</label>
+            <div className="px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold text-blue-600">
+              {formData.niche === 'realestate' ? 'Mercado Imobiliário' : 'Revenda de Veículos'}
+            </div>
+          </div>
         </div>
 
         <div>
@@ -299,10 +305,11 @@ export default function AdminProfile({ user, onUpdate }: AdminProfileProps) {
               {formData.card_bottom_image ? (
                 <img src={formData.card_bottom_image} className="w-full h-full object-contain p-4" alt="Footer" />
               ) : (
-                <div className="text-center text-gray-400">
-                  <Camera className="w-10 h-10 mx-auto mb-2 opacity-20" />
-                  <p className="text-xs">Nenhuma imagem personalizada</p>
-                </div>
+                <img 
+                  src={formData.niche === 'realestate' ? "/defaults/realestate.png" : "https://omeucartao.com.br/wp-content/uploads/2025/02/17.png"} 
+                  className="w-full h-full object-contain p-4 opacity-30 grayscale" 
+                  alt="Default" 
+                />
               )}
               <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white cursor-pointer transition-opacity">
                 <span className="bg-white/20 px-4 py-2 rounded-full font-bold text-sm backdrop-blur-md">Alterar Imagem</span>

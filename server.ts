@@ -339,7 +339,8 @@ async function setupApp() {
           email: req.body.email || authData.user.email,
           plan_id: plan_id || null,
           expiry_date: expiryDate,
-          is_admin: req.body.is_admin === true
+          is_admin: req.body.is_admin === true,
+          niche: req.body.niche || 'vehicle'
         });
       if (profileError) throw profileError;
 
@@ -466,7 +467,7 @@ async function setupApp() {
     const { display_name, establishment, role_title, profile_image, card_bottom_image, card_background_image, profile_banner_image, show_catalog_banner, show_profile_banner, footer_text, primary_color, background_color, social_links, marquee_text, show_marquee, marquee_speed, whatsapp, instagram, facebook } = req.body;
     const { error } = await supabase
       .from('profiles')
-      .update({ display_name, establishment, role_title, profile_image, card_bottom_image, card_background_image, profile_banner_image, show_catalog_banner, show_profile_banner, footer_text, primary_color, background_color, social_links, marquee_text, show_marquee, marquee_speed, whatsapp, instagram, facebook })
+      .update({ display_name, establishment, role_title, profile_image, card_bottom_image, card_background_image, profile_banner_image, show_catalog_banner, show_profile_banner, footer_text, primary_color, background_color, social_links, marquee_text, show_marquee, marquee_speed, whatsapp, instagram, facebook, niche: req.body.niche })
       .eq('id', req.user.id);
     if (error) return res.status(400).json({ error: error.message });
     res.json({ success: true });
@@ -578,7 +579,8 @@ async function setupApp() {
           email: req.body.email || null,
           admin_message,
           admin_message_date: new Date().toISOString(),
-          is_admin: req.body.is_admin === true
+          is_admin: req.body.is_admin === true,
+          niche: req.body.niche
         })
         .eq('id', req.params.id);
       
@@ -883,7 +885,20 @@ async function setupApp() {
         cash_price: req.body.cash_price || null,
         card_installments: req.body.card_installments || null,
         card_interest: !!req.body.card_interest,
-        is_active: req.body.is_active !== undefined ? !!req.body.is_active : true
+        is_active: req.body.is_active !== undefined ? !!req.body.is_active : true,
+        niche: req.body.niche || 'vehicle',
+        property_type: req.body.property_type || null,
+        bedrooms: req.body.bedrooms || null,
+        bathrooms: req.body.bathrooms || null,
+        suites: req.body.suites || null,
+        parking_spaces: req.body.parking_spaces || null,
+        area: req.body.area || null,
+        location: req.body.location || null,
+        is_for_sale: req.body.is_for_sale !== undefined ? !!req.body.is_for_sale : true,
+        is_for_rent: req.body.is_for_rent !== undefined ? !!req.body.is_for_rent : false,
+        condo_fee: req.body.condo_fee || null,
+        iptu: req.body.iptu || null,
+        map_url: req.body.map_url || null
       })
       .select('id')
       .single();
@@ -900,7 +915,10 @@ async function setupApp() {
       'is_new', 'year', 'price', 'mileage', 'brand', 'condition', 'fuel', 
       'transmission', 'color', 'optionals', 'show_consortium_plans', 
       'consortium_plans', 'show_financing_plans', 'financing_plans',
-      'cash_price', 'card_installments', 'card_interest', 'is_active'
+      'cash_price', 'card_installments', 'card_interest', 'is_active',
+      'niche', 'property_type', 'bedrooms', 'bathrooms', 'suites', 
+      'parking_spaces', 'area', 'location', 'is_for_sale', 'is_for_rent', 
+      'condo_fee', 'iptu', 'map_url'
     ];
 
     fields.forEach(field => {

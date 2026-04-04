@@ -21,7 +21,8 @@ export default function MasterAdmin() {
     role_title: 'Consultor(a) Yamaha',
     slug: '',
     email: '',
-    documento: ''
+    documento: '',
+    niche: 'vehicle'
   });
 
   const fetchData = async () => {
@@ -113,7 +114,7 @@ export default function MasterAdmin() {
       if (res.ok) {
         toast.success(`Usuário ${newUserData.username} criado com sucesso!`);
         setShowAddUser(false);
-        setNewUserData({ username: '', password: '', display_name: '', role_title: 'Consultor(a) Yamaha', slug: '', email: '', documento: '' });
+        setNewUserData({ username: '', password: '', display_name: '', role_title: 'Consultor(a) Yamaha', slug: '', email: '', documento: '', niche: 'vehicle' });
         fetchData();
       } else {
         const data = await res.json();
@@ -358,6 +359,21 @@ export default function MasterAdmin() {
                 onChange={(e) => setNewUserData({ ...newUserData, role_title: e.target.value })}
                 className="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
               />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Nicho / Setor</label>
+                <select
+                  value={(newUserData as any).niche || 'vehicle'}
+                  onChange={(e) => {
+                    const newNiche = e.target.value;
+                    const defaultRole = newNiche === 'realestate' ? 'Corretor(a) de Imóveis' : 'Consultor(a) Yamaha';
+                    setNewUserData({ ...newUserData, niche: newNiche, role_title: defaultRole } as any);
+                  }}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 appearance-none font-bold text-blue-600"
+                >
+                  <option value="vehicle">Revenda de Veículos</option>
+                  <option value="realestate">Mercado Imobiliário</option>
+                </select>
             </div>
             <div className="flex items-end">
               <button type="submit" className="w-full bg-blue-600 text-white font-bold py-2 rounded-xl hover:bg-blue-700 transition-all shadow-md shadow-blue-100">

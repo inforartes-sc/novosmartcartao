@@ -30,6 +30,19 @@ export interface Product {
   card_installments?: string;
   card_interest?: boolean;
   is_active?: boolean;
+  niche?: 'vehicle' | 'realestate';
+  property_type?: string;
+  bedrooms?: number | string;
+  bathrooms?: number | string;
+  suites?: number | string;
+  parking_spaces?: number | string;
+  area?: number | string;
+  location?: string;
+  is_for_sale?: boolean;
+  is_for_rent?: boolean;
+  condo_fee?: string | number;
+  iptu?: string | number;
+  map_url?: string;
 }
 
 export interface FinancingFormData {

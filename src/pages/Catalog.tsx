@@ -19,6 +19,8 @@ export default function Catalog() {
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedCondition, setSelectedCondition] = useState('');
   const [selectedBrand, setSelectedBrand] = useState('');
+  const [selectedPropertyType, setSelectedPropertyType] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('');
 
   useEffect(() => {
     if (!slug) return;
@@ -34,28 +36,41 @@ export default function Catalog() {
 
 
   const filteredProducts = React.useMemo(() => {
-    if (!data?.products) return [];
-    return data.products.filter((product: any) => {
-      const searchStr = `${product.brand} ${product.name} ${product.year} ${product.color} ${product.description}`.toLowerCase();
-      const matchesSearch = searchTerm === '' || searchStr.includes(searchTerm.toLowerCase());
-      const matchesYear = selectedYear === '' || String(product.year) === selectedYear;
-      const matchesColor = selectedColor === '' || product.color === selectedColor;
-      const matchesCondition = selectedCondition === '' || product.condition === selectedCondition;
-      const matchesBrand = selectedBrand === '' || product.brand === selectedBrand;
+    if (!data || !data.products) return [];
+    const { user, products } = data;
+    return products.filter((product: any) => {
+      const isRealEstate = user?.niche === 'realestate';
       
-      return matchesSearch && matchesYear && matchesColor && matchesCondition && matchesBrand;
+      const searchStr = isRealEstate 
+        ? `${product.property_type} ${product.name} ${product.location} ${product.description}`.toLowerCase()
+        : `${product.brand} ${product.name} ${product.year} ${product.color} ${product.description}`.toLowerCase();
+      
+      const matchesSearch = searchTerm === '' || searchStr.includes(searchTerm.toLowerCase());
+      
+      if (isRealEstate) {
+        const matchesPropertyType = selectedPropertyType === '' || product.property_type === selectedPropertyType;
+        const matchesLocation = selectedLocation === '' || product.location === selectedLocation;
+        return matchesSearch && matchesPropertyType && matchesLocation;
+      } else {
+        const matchesYear = selectedYear === '' || String(product.year) === selectedYear;
+        const matchesColor = selectedColor === '' || product.color === selectedColor;
+        const matchesCondition = selectedCondition === '' || product.condition === selectedCondition;
+        const matchesBrand = selectedBrand === '' || product.brand === selectedBrand;
+        return matchesSearch && matchesYear && matchesColor && matchesCondition && matchesBrand;
+      }
     });
-  }, [data?.products, searchTerm, selectedYear, selectedColor, selectedCondition, selectedBrand]);
+  }, [data, searchTerm, selectedYear, selectedColor, selectedCondition, selectedBrand, selectedPropertyType, selectedLocation]);
 
   const featuredFiltered = React.useMemo(() => {
     return filteredProducts.filter((p: any) => p.is_highlighted);
   }, [filteredProducts]);
 
-
   if (loading) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
   if (!data || data.error) return <div className="min-h-screen flex items-center justify-center text-red-500">Perfil não encontrado</div>;
 
   const { user, products } = data;
+
+
 
   const isDark = (color: string) => {
     const hex = (color || '#ffffff').replace('#', '');
@@ -200,7 +215,7 @@ export default function Catalog() {
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
               <input 
                 type="text" 
-                placeholder="Buscar por marca, modelo, ano ou cor..."
+                placeholder={user?.niche === 'realestate' ? "Buscar por tipo, localização ou nome..." : "Buscar por marca, modelo, ano ou cor..."}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full h-14 pl-14 pr-6 bg-gray-50/50 border border-transparent rounded-2xl outline-none focus:bg-white focus:border-blue-100 focus:ring-4 focus:ring-blue-50 transition-all text-sm font-medium"
@@ -208,65 +223,101 @@ export default function Catalog() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {/* Intelligent Year Select */}
-              <div className="relative group">
-                <select 
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
-                  className="w-full h-12 pl-4 pr-10 bg-white border border-gray-100 rounded-xl outline-none appearance-none hover:border-gray-200 focus:border-blue-200 transition-all text-xs font-semibold text-gray-700 cursor-pointer"
-                >
-                  <option value="">Todos os anos</option>
-                  {[...new Set(products.map((p: any) => p.year).filter(Boolean))].sort((a: any, b: any) => b - a).map(year => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              </div>
+              {user?.niche === 'realestate' ? (
+                <>
+                  {/* Property Type Select */}
+                  <div className="relative group">
+                    <select 
+                      value={selectedPropertyType}
+                      onChange={(e) => setSelectedPropertyType(e.target.value)}
+                      className="w-full h-12 pl-4 pr-10 bg-white border border-gray-100 rounded-xl outline-none appearance-none hover:border-gray-200 focus:border-blue-200 transition-all text-xs font-semibold text-gray-700 cursor-pointer"
+                    >
+                      <option value="">Todos os tipos</option>
+                      {[...new Set(products.map((p: any) => p.property_type).filter(Boolean))].sort().map(type => (
+                        <option key={type as string} value={type as string}>{type as string}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
 
-              {/* Intelligent Color Select */}
-              <div className="relative group">
-                <select 
-                  value={selectedColor}
-                  onChange={(e) => setSelectedColor(e.target.value)}
-                  className="w-full h-12 pl-4 pr-10 bg-white border border-gray-100 rounded-xl outline-none appearance-none hover:border-gray-200 focus:border-blue-200 transition-all text-xs font-semibold text-gray-700 cursor-pointer"
-                >
-                  <option value="">Todas as cores</option>
-                  {[...new Set(products.map((p: any) => p.color).filter(Boolean))].sort().map(color => (
-                    <option key={color} value={color}>{color}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              </div>
+                  {/* Location Select */}
+                  <div className="relative group">
+                    <select 
+                      value={selectedLocation}
+                      onChange={(e) => setSelectedLocation(e.target.value)}
+                      className="w-full h-12 pl-4 pr-10 bg-white border border-gray-100 rounded-xl outline-none appearance-none hover:border-gray-200 focus:border-blue-200 transition-all text-xs font-semibold text-gray-700 cursor-pointer"
+                    >
+                      <option value="">Todas as localizações</option>
+                      {[...new Set(products.map((p: any) => p.location).filter(Boolean))].sort().map(loc => (
+                        <option key={loc as string} value={loc as string}>{loc as string}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Intelligent Year Select */}
+                  <div className="relative group">
+                    <select 
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(e.target.value)}
+                      className="w-full h-12 pl-4 pr-10 bg-white border border-gray-100 rounded-xl outline-none appearance-none hover:border-gray-200 focus:border-blue-200 transition-all text-xs font-semibold text-gray-700 cursor-pointer"
+                    >
+                      <option value="">Todos os anos</option>
+                      {[...new Set(products.map((p: any) => p.year).filter(Boolean))].sort((a: any, b: any) => b - a).map(year => (
+                        <option key={year} value={year}>{year}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
 
-              {/* Intelligent Condition Select */}
-              <div className="relative group">
-                <select 
-                  value={selectedCondition}
-                  onChange={(e) => setSelectedCondition(e.target.value)}
-                  className="w-full h-12 pl-4 pr-10 bg-white border border-gray-100 rounded-xl outline-none appearance-none hover:border-gray-200 focus:border-blue-200 transition-all text-xs font-semibold text-gray-700 cursor-pointer"
-                >
-                  <option value="">Novo e Seminovo</option>
-                  {[...new Set(products.map((p: any) => p.condition).filter(Boolean))].sort().map(condition => (
-                    <option key={condition} value={condition}>{condition}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              </div>
+                  {/* Intelligent Color Select */}
+                  <div className="relative group">
+                    <select 
+                      value={selectedColor}
+                      onChange={(e) => setSelectedColor(e.target.value)}
+                      className="w-full h-12 pl-4 pr-10 bg-white border border-gray-100 rounded-xl outline-none appearance-none hover:border-gray-200 focus:border-blue-200 transition-all text-xs font-semibold text-gray-700 cursor-pointer"
+                    >
+                      <option value="">Todas as cores</option>
+                      {[...new Set(products.map((p: any) => p.color).filter(Boolean))].sort().map(color => (
+                        <option key={color} value={color}>{color}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
 
-              {/* Intelligent Brand Select */}
-              <div className="relative group">
-                <select 
-                  value={selectedBrand}
-                  onChange={(e) => setSelectedBrand(e.target.value)}
-                  className="w-full h-12 pl-4 pr-10 bg-white border border-gray-100 rounded-xl outline-none appearance-none hover:border-gray-200 focus:border-blue-200 transition-all text-xs font-semibold text-gray-700 cursor-pointer"
-                >
-                  <option value="">Todas as marcas</option>
-                  {[...new Set(products.map((p: any) => p.brand).filter(Boolean))].sort().map(brand => (
-                    <option key={brand as string} value={brand as string}>{brand as string}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              </div>
+                  {/* Intelligent Condition Select */}
+                  <div className="relative group">
+                    <select 
+                      value={selectedCondition}
+                      onChange={(e) => setSelectedCondition(e.target.value)}
+                      className="w-full h-12 pl-4 pr-10 bg-white border border-gray-100 rounded-xl outline-none appearance-none hover:border-gray-200 focus:border-blue-200 transition-all text-xs font-semibold text-gray-700 cursor-pointer"
+                    >
+                      <option value="">Novo e Seminovo</option>
+                      {[...new Set(products.map((p: any) => p.condition).filter(Boolean))].sort().map(condition => (
+                        <option key={condition} value={condition}>{condition}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
+
+                  {/* Intelligent Brand Select */}
+                  <div className="relative group">
+                    <select 
+                      value={selectedBrand}
+                      onChange={(e) => setSelectedBrand(e.target.value)}
+                      className="w-full h-12 pl-4 pr-10 bg-white border border-gray-100 rounded-xl outline-none appearance-none hover:border-gray-200 focus:border-blue-200 transition-all text-xs font-semibold text-gray-700 cursor-pointer"
+                    >
+                      <option value="">Todas as marcas</option>
+                      {[...new Set(products.map((p: any) => p.brand).filter(Boolean))].sort().map(brand => (
+                        <option key={brand as string} value={brand as string}>{brand as string}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -360,13 +411,15 @@ export default function Catalog() {
             <div className="py-20 text-center">
               <Package className="w-16 h-16 text-gray-200 mx-auto mb-4" />
               <p className="text-gray-400 font-medium">Nenhum produto encontrado com estes filtros.</p>
-              <button 
+                <button 
                 onClick={() => {
                   setSearchTerm('');
                   setSelectedYear('');
                   setSelectedColor('');
                   setSelectedCondition('');
                   setSelectedBrand('');
+                  setSelectedPropertyType('');
+                  setSelectedLocation('');
                 }}
                 className="mt-4 text-blue-600 font-bold hover:underline"
               >

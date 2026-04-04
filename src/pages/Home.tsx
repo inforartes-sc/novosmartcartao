@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { Instagram, Facebook, MessageCircle, Bike, Globe, Youtube, Twitter, Music, Mail, Phone, Linkedin, Map } from 'lucide-react';
+import { Instagram, Facebook, MessageCircle, Bike, Globe, Youtube, Twitter, Music, Mail, Phone, Linkedin, Map, Home as HomeIcon } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 export default function Home() {
@@ -150,8 +150,8 @@ export default function Home() {
             className="w-full flex items-center justify-center gap-3 py-2.5 text-white rounded-full font-bold shadow-md transition-all pulsante"
             style={{ backgroundColor: user.primary_color || '#003da5' }}
           >
-            <Bike className="w-5 h-5" />
-            Catálogo de produtos
+            {user.niche === 'realestate' ? <HomeIcon className="w-5 h-5" /> : <Bike className="w-5 h-5" />}
+            Catálogo de {user.niche === 'realestate' ? 'imóveis' : 'produtos'}
           </motion.button>
 
           {user.instagram && (
@@ -218,8 +218,8 @@ export default function Home() {
           className="w-full mt-4"
         >
           <img
-            src={user.card_bottom_image || "https://omeucartao.com.br/wp-content/uploads/2025/02/17.png"}
-            alt="Yamaha R3"
+            src={user.card_bottom_image || (user.niche === 'realestate' ? "/defaults/realestate.png" : "https://omeucartao.com.br/wp-content/uploads/2025/02/17.png")}
+            alt={user.niche === 'realestate' ? "Imóvel" : "Veículo"}
             className="w-full h-auto object-contain"
             referrerPolicy="no-referrer"
           />

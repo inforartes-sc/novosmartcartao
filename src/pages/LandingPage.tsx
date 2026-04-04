@@ -41,6 +41,7 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const [currentExample, setCurrentExample] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
@@ -120,6 +121,24 @@ export default function LandingPage() {
     }, 5000);
     return () => clearInterval(timer);
   }, [testimonials]);
+
+  // Helper for fallbacks
+  const getS = (key: string, def: string) => (settings && settings[key] !== undefined && settings[key] !== null) ? settings[key] : def;
+
+  const exampleImages = [
+    getS('landing_example1', '/landing/examples.png'),
+    getS('landing_example2', '/landing/examples.png'),
+    getS('landing_example3', '/landing/examples.png'),
+    getS('landing_example4', '/landing/examples.png')
+  ];
+
+  // Timer para o carrossel de imagens de exemplo
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentExample((prev) => (prev + 1) % exampleImages.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [exampleImages.length]);
 
   const features = [
     {
@@ -201,9 +220,6 @@ export default function LandingPage() {
     );
   }
 
-  // Helper for fallsbacks
-  const getS = (key: string, def: string) => (settings && settings[key] !== undefined && settings[key] !== null) ? settings[key] : def;
-
   const heroTitleParts = getS('landing_hero_title', 'REVOLUCIONE SUAS VENDAS').split(' ');
   const heroTitleFirst = heroTitleParts[0];
   const heroTitleRest = heroTitleParts.slice(1).join(' ');
@@ -223,23 +239,16 @@ export default function LandingPage() {
   const ctaTitleFirst = ctaTitleParts.slice(0, -1).join(' ');
   const ctaTitleLast = ctaTitleParts.pop();
 
-  const exampleImages = [
-    getS('landing_example1', '/landing/examples.png'),
-    getS('landing_example2', '/landing/examples.png'),
-    getS('landing_example3', '/landing/examples.png'),
-    getS('landing_example4', '/landing/examples.png')
-  ];
-
   return (
     <div className="min-h-screen bg-white font-sans selection:bg-blue-600 selection:text-white overflow-x-hidden text-slate-900">
       
       {/* Navigation */}
       <nav className="fixed w-full z-[60] transition-all duration-300 bg-white/70 backdrop-blur-2xl border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-32">
+          <div className="flex justify-between items-center h-16 md:h-20">
             <div className="flex items-center gap-3 cursor-pointer group" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
               {settings?.footer_logo || settings?.default_logo ? (
-                <img src={settings.footer_logo || settings.default_logo} className="h-24 sm:h-28 object-contain drop-shadow-sm" alt="Logo" />
+                <img src={settings.footer_logo || settings.default_logo} className="h-10 md:h-14 object-contain drop-shadow-sm" alt="Logo" />
               ) : (
                 <>
                   <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-200 group-hover:rotate-6 transition-transform">
@@ -280,7 +289,7 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="fixed inset-0 z-50 bg-white pt-24 px-8 md:hidden"
+              className="fixed inset-0 z-50 bg-white pt-16 px-8 md:hidden"
             >
               <div className="flex flex-col gap-1 text-center">
                 <a href="#features" onClick={() => setMobileMenuOpen(false)} className="py-4 text-lg font-black text-slate-900 uppercase tracking-tighter">Recursos</a>
@@ -300,7 +309,7 @@ export default function LandingPage() {
 
       <main>
         {/* Hero Section */}
-        <section className="relative pt-40 pb-20 lg:pt-56 lg:pb-32 overflow-hidden bg-white">
+        <section className="relative pt-24 pb-20 lg:pt-32 lg:pb-32 overflow-hidden bg-white">
           <div className="absolute top-0 right-0 w-[50%] h-full bg-slate-50/50 -skew-x-12 translate-x-32 -z-10"></div>
           
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -313,7 +322,7 @@ export default function LandingPage() {
               >
                  {/* Badge removido para limpeza do Hero */}
                 
-                <h1 className="text-4xl lg:text-6xl font-black text-slate-900 leading-[1.1] mb-8 tracking-tighter uppercase italic">
+                <h1 className="text-3xl lg:text-5xl font-black text-slate-900 leading-[1.1] mb-8 tracking-tighter uppercase italic">
                    {heroTitleFirst} <br />
                    <span className="text-blue-600 not-italic">{heroTitleRest}</span>
                 </h1>
@@ -382,29 +391,61 @@ export default function LandingPage() {
            </div>
         </div>
 
-        {/* Concept Section - O que é? */}
-        <section id="concept" className="py-24 bg-white">
+        {/* Seção de Conceito - O que é? */}
+        <section id="concept" className="py-12 md:py-24 bg-white">
            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-                 <div className="order-2 lg:order-1">
-                    <div className="grid grid-cols-2 gap-4 p-8 bg-slate-50 rounded-[4rem] border border-slate-100 shadow-2xl relative">
-                       {exampleImages.map((img, i) => (
-                         <div key={i} className="aspect-[4/5] bg-white rounded-3xl overflow-hidden shadow-lg border border-slate-100 group transition-transform hover:-translate-y-2 duration-500">
-                            {img && (img.includes('/landing/') || img.startsWith('http')) ? (
-                              <img src={img} alt={`Exemplo ${i+1}`} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex flex-col items-center justify-center text-slate-200">
-                                 <ImageIcon className="w-12 h-12" />
-                              </div>
-                            )}
-                         </div>
-                       ))}
+                 <div className="order-2 lg:order-1 relative group max-w-lg mx-auto w-full">
+                    <div className="relative aspect-[4/5] sm:aspect-square md:aspect-[4/5] bg-slate-50 rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden">
+                       <AnimatePresence initial={false}>
+                          <motion.div
+                             key={currentExample}
+                             initial={{ x: "100%" }}
+                             animate={{ x: 0 }}
+                             exit={{ x: "-100%" }}
+                             transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+                             className="absolute inset-0 w-full h-full p-4 md:p-8"
+                          >
+                             <div className="w-full h-full bg-white rounded-[3rem] overflow-hidden shadow-xl border border-slate-100 relative group-hover:shadow-2xl transition-shadow duration-500">
+                                {exampleImages[currentExample] && (exampleImages[currentExample].includes('/landing/') || exampleImages[currentExample].startsWith('http')) ? (
+                                   <img 
+                                      src={exampleImages[currentExample]} 
+                                      alt={`Exemplo ${currentExample + 1}`} 
+                                      className="w-full h-full object-cover transform transition-transform duration-[2000ms] group-hover:scale-110" 
+                                   />
+                                ) : (
+                                   <div className="w-full h-full flex flex-col items-center justify-center text-slate-200">
+                                      <ImageIcon className="w-20 h-20 mb-4 opacity-20" />
+                                      <p className="text-xs font-black uppercase tracking-widest text-slate-300">Exemplo {currentExample + 1}</p>
+                                   </div>
+                                )}
+                             </div>
+                          </motion.div>
+                       </AnimatePresence>
+
+                       {/* Pontos de Navegação */}
+                       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-3 z-20">
+                          {exampleImages.map((_, i) => (
+                             <button
+                                key={i}
+                                onClick={() => setCurrentExample(i)}
+                                className={`h-2 transition-all duration-500 rounded-full ${
+                                   currentExample === i ? "w-8 bg-blue-600" : "w-2 bg-slate-300 hover:bg-slate-400"
+                                }`}
+                                aria-label={`Ir para slide ${i + 1}`}
+                             />
+                          ))}
+                       </div>
                     </div>
+                    
+                    {/* Elementos Decorativos de Fundo */}
+                    <div className="absolute -z-10 -top-10 -left-10 w-40 h-40 bg-blue-600/5 blur-3xl rounded-full"></div>
+                    <div className="absolute -z-10 -bottom-10 -right-10 w-60 h-60 bg-indigo-600/5 blur-3xl rounded-full"></div>
                  </div>
                  <div className="order-1 lg:order-2 space-y-8">
                     <h2 className="text-blue-600 text-xs font-black uppercase tracking-[0.4em] mb-4">O que é um Cartão Digital?</h2>
                     
-                    <h3 className="text-3xl lg:text-5xl font-black text-slate-900 tracking-tighter uppercase italic leading-none text-balance">
+                    <h3 className="text-2xl lg:text-4xl font-black text-slate-900 tracking-tighter uppercase italic leading-none text-balance">
                       {conceptTitleFirst} <br />
                       <span className="text-blue-600 not-italic">{conceptTitleLast}</span>
                     </h3>
@@ -440,12 +481,12 @@ export default function LandingPage() {
         </section>
 
         {/* Features Grid */}
-        <section id="features" className="py-24 bg-slate-50">
+        <section id="features" className="py-12 md:py-24 bg-slate-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-20">
               <h2 className="text-blue-600 text-[10px] font-black uppercase tracking-[0.5em] mb-4 text-center">Funcionalidades</h2>
               
-              <h3 className="text-3xl lg:text-5xl font-black text-slate-900 tracking-tighter font-heading mb-6 leading-none uppercase">
+              <h3 className="text-2xl lg:text-4xl font-black text-slate-900 tracking-tighter font-heading mb-6 leading-none uppercase">
                 {featuresTitleFirst} <span className="text-blue-600 italic underline decoration-blue-200 decoration-8 underline-offset-4">{featuresTitleLast}</span>
               </h3>
             </div>
@@ -467,7 +508,7 @@ export default function LandingPage() {
         </section>
 
         {/* Section: Custom Service (Done For You) */}
-        <section className="py-28 bg-gradient-to-br from-red-600 via-red-700 to-red-900 text-white overflow-hidden relative">
+        <section className="py-16 md:py-28 bg-gradient-to-br from-red-600 via-red-700 to-red-900 text-white overflow-hidden relative">
           <div className="absolute top-[-20%] right-[-10%] w-[80%] h-[140%] bg-red-500/20 rotate-12 blur-[80px] rounded-full pointer-events-none"></div>
           <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -482,7 +523,7 @@ export default function LandingPage() {
                 <div className="inline-block px-4 py-1.5 bg-red-900/40 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-6 border border-red-500/50 shadow-inner">
                   {getS('landing_done_tag', 'VOCÊ NÃO PRECISA SABER EDITAR!')}
                 </div>
-                <h3 className="text-4xl lg:text-6xl font-black tracking-tighter uppercase italic leading-[1.05] mb-6 text-balance drop-shadow-lg">
+                <h3 className="text-3xl lg:text-5xl font-black tracking-tighter uppercase italic leading-[1.05] mb-6 text-balance drop-shadow-lg">
                   {getS('landing_done_title_first', 'NÓS MONTAMOS')} <br />
                   <span className="text-red-200 not-italic">{getS('landing_done_title_last', 'TUDO POR VOCÊ!')}</span>
                 </h3>
@@ -578,7 +619,7 @@ export default function LandingPage() {
         </section>
 
         {/* Section: Catalog Features */}
-        <section className="py-28 bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-900 text-white overflow-hidden relative">
+        <section className="py-16 md:py-28 bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-900 text-white overflow-hidden relative">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
@@ -657,7 +698,7 @@ export default function LandingPage() {
                 <div className="inline-block px-4 py-1.5 bg-blue-900/40 text-blue-300 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-6 border border-blue-500/30">
                   {getS('landing_catalog_tag', 'RECURSOS EXCLUSIVOS')}
                 </div>
-                <h3 className="text-4xl lg:text-5xl font-black tracking-tighter uppercase italic leading-[1.05] mb-8 text-balance drop-shadow-md">
+                <h3 className="text-3xl lg:text-4xl font-black tracking-tighter uppercase italic leading-[1.05] mb-8 text-balance drop-shadow-md">
                   {getS('landing_catalog_title_first', 'O PODER DO SEU')} <br />
                   <span className="text-blue-400 not-italic border-b-4 border-blue-500 pb-1">{getS('landing_catalog_title_last', 'CATÁLOGO DIGITAL')}</span>
                 </h3>
@@ -730,7 +771,7 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-24">
               <h2 className="text-blue-400 text-xs font-black uppercase tracking-[0.3em] mb-6 font-black">Planos de Acesso</h2>
-              <h3 className="text-3xl lg:text-6xl font-black text-white tracking-tighter font-heading mb-8 leading-none uppercase italic">
+              <h3 className="text-2xl lg:text-5xl font-black text-white tracking-tighter font-heading mb-8 leading-none uppercase italic">
                  ESCOLHA SEU <br />
                  <span className="text-blue-400 not-italic">PODER!</span>
               </h3>
@@ -870,7 +911,7 @@ export default function LandingPage() {
         </section>
 
         {/* Seção Exclusiva: Autoridade & Avaliações */}
-        <section id="reviews" className="py-20 bg-white relative overflow-hidden border-b border-slate-100">
+        <section id="reviews" className="py-12 md:py-20 bg-white relative overflow-hidden border-b border-slate-100">
            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
               <div className="flex flex-col md:flex-row items-center justify-between gap-12 p-12 bg-slate-50/50 rounded-[4rem] border border-slate-100 shadow-sm relative overflow-hidden group">
                  {/* Decorative background element */}
@@ -881,7 +922,7 @@ export default function LandingPage() {
                        <Star className="w-3 h-3 fill-current" /> SUCESSO COMPROVADO
                     </div>
                     
-                    <h3 className="text-4xl lg:text-5xl font-black text-slate-900 leading-none tracking-tighter uppercase italic">
+                    <h3 className="text-3xl lg:text-4xl font-black text-slate-900 leading-none tracking-tighter uppercase italic">
                        {getS('landing_stats_text', '+425 Clientes Satisfeitos')}
                     </h3>
                     
@@ -962,7 +1003,7 @@ export default function LandingPage() {
         </section>
 
         {/* FAQ Section */}
-        <section className="py-24 bg-white relative">
+        <section className="py-12 md:py-24 bg-white relative">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
                <h2 className="text-slate-300 font-black text-7xl uppercase tracking-tighter opacity-10 absolute left-0 right-0 top-16 select-none pointer-events-none">PERGUNTAS</h2>
@@ -1002,22 +1043,22 @@ export default function LandingPage() {
         </section>
 
         {/* Final CTA */}
-        <section className="py-32 bg-white relative overflow-hidden">
+        <section className="py-16 md:py-32 bg-white relative overflow-hidden">
            <div className="max-w-7xl mx-auto px-4 relative z-10">
-              <div className="bg-slate-900 rounded-[4rem] p-12 lg:p-24 text-center relative overflow-hidden shadow-[0_50px_100px_rgba(15,23,42,0.3)]">
+              <div className="bg-slate-900 rounded-[2.5rem] md:rounded-[4rem] p-10 md:p-24 text-center relative overflow-hidden shadow-[0_40px_80px_-20px_rgba(15,23,42,0.15)]">
                  <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] -z-10"></div>
                  <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px] -z-10"></div>
                  
-                 <h2 className="text-3xl lg:text-5xl font-black text-white mb-8 tracking-tighter leading-none uppercase italic text-balance">
+                 <h2 className="text-2xl lg:text-4xl font-black text-white mb-8 tracking-tighter leading-none uppercase italic text-balance">
                     {ctaTitleFirst} <br />
                     <span className="text-blue-500 not-italic underline decoration-blue-500/30 decoration-8 underline-offset-8">{ctaTitleLast}</span>
                  </h2>
                  <p className="text-slate-400 text-lg lg:text-xl mb-14 max-w-2xl mx-auto font-medium">
                     {getS('landing_cta_subtitle', 'Você está a 5 minutes de ter uma presença digital que vende por você 24 horas por dia.')}
                  </p>
-                                  <div className="flex flex-col sm:flex-row gap-5 justify-center">
-                    <a href={registerUrl} target="_blank" rel="noopener noreferrer" className="bg-white text-slate-900 px-14 py-7 rounded-[2.5rem] font-black text-xl uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-2xl active:scale-95">
-                       {getS('landing_cta_button', 'CRIAR MEU CATÁLOGO AGORA')}
+                  <div className="flex flex-col sm:flex-row gap-5 justify-center">
+                    <a href={registerUrl} target="_blank" rel="noopener noreferrer" className="bg-white text-slate-900 px-8 py-5 md:px-14 md:py-7 rounded-[2rem] md:rounded-[2.5rem] font-black text-lg md:text-xl uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-2xl active:scale-95 leading-tight">
+                       {getS('landing_cta_button', 'QUERO MEU CATÁLOGO')}
                     </a>
                   </div>
                  <div className="mt-12 flex items-center justify-center gap-6 text-slate-500 font-black uppercase text-[10px] tracking-[0.3em]">

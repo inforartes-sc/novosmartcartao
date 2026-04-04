@@ -1,0 +1,16 @@
+-- Update profiles table to include niche
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS niche TEXT DEFAULT 'vehicle';
+
+-- Update products table to include niche and real estate fields
+ALTER TABLE products ADD COLUMN IF NOT EXISTS niche TEXT DEFAULT 'vehicle';
+ALTER TABLE products ADD COLUMN IF NOT EXISTS property_type TEXT;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS bedrooms INTEGER;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS bathrooms INTEGER;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS suites INTEGER;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS parking_spaces INTEGER;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS area NUMERIC;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS location TEXT;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS is_for_sale BOOLEAN DEFAULT TRUE;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS is_for_rent BOOLEAN DEFAULT FALSE;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS condo_fee NUMERIC;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS iptu NUMERIC;
