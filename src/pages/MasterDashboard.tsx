@@ -12,6 +12,7 @@ import MasterLanding from './master/MasterLanding';
 import MasterFinanceiro from './master/MasterFinanceiro';
 import MasterOnboarding from './master/MasterOnboarding';
 import toast from 'react-hot-toast';
+import { ExternalLink } from 'lucide-react';
 
 export default function MasterDashboard() {
   const { user, loading, logout } = useAuth();
@@ -180,22 +181,38 @@ export default function MasterDashboard() {
               { to: '/admin', icon: LayoutDashboard, label: 'Visão Geral' },
               { to: '/admin/users', icon: Users, label: 'Usuários' },
               { to: '/admin/plans', icon: Rocket, label: 'Planos' },
-              { to: '/admin/financeiro', icon: DollarSign, label: 'Financeiro' },
+              { to: `https://pagixypay.vercel.app/login?email=${user?.email || ''}`, icon: DollarSign, label: 'Portal Financeiro', external: true },
               { to: '/admin/landing', icon: Globe, label: 'Página Inicial' },
               { to: '/admin/onboarding', icon: Layout, label: 'Onboarding' },
               { to: '/admin/settings', icon: Settings, label: 'Configurações' },
-            ].map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={() => setIsSidebarOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
-                  isActive(item.to) ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
-                }`}
-              >
-                <item.icon className="w-5 h-5" />
-                <span className="font-bold text-sm">{item.label}</span>
-              </Link>
+            ].map((item: any) => (
+              item.external ? (
+                <a
+                  key={item.to}
+                  href={item.to}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl transition-all text-slate-400 hover:bg-slate-800/50 hover:text-white"
+                >
+                  <div className="flex items-center gap-3">
+                    <item.icon className="w-5 h-5" />
+                    <span className="font-bold text-sm">{item.label}</span>
+                  </div>
+                  <ExternalLink className="w-4 h-4 opacity-40" />
+                </a>
+              ) : (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setIsSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
+                    isActive(item.to) ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
+                  }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span className="font-bold text-sm">{item.label}</span>
+                </Link>
+              )
             ))}
           </nav>
 
