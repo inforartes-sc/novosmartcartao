@@ -148,8 +148,8 @@ export default function Onboarding() {
                 />
               </motion.div>
             ) : (
-              <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/20">
-                <Layout className="w-8 h-8 text-white" />
+              <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/20 text-white">
+                {isRealEstate ? <Home className="w-8 h-8" /> : <Car className="w-8 h-8" />}
               </div>
             )}
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight leading-tight">
