@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CreditCard, Calendar, CheckCircle2, Clock, AlertCircle, ExternalLink, RefreshCw, ChevronRight, FileText, Wallet, Globe } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
+import { PAYMENT_SYSTEM_URL } from '../config';
 
 interface Invoice {
   id: number;
@@ -182,7 +183,7 @@ export default function UserInvoices() {
             <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Portal Financeiro Completo</p>
           </div>
           <a 
-            href="https://pagixypay.vercel.app" 
+            href={PAYMENT_SYSTEM_URL} 
             target="_blank" 
             rel="noopener noreferrer"
             className="text-[10px] font-black uppercase text-blue-600 hover:text-blue-700 underline tracking-widest flex items-center gap-1"

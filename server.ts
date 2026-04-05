@@ -406,7 +406,7 @@ async function setupApp() {
 
       // INTEGRATION WITH EXTERNAL SYSTEM (PagixyPay API)
       try {
-        const externalApiUrl = process.env.OTHER_SYSTEM_API_URL || 'https://pagixypay.vercel.app/api/clients';
+        const externalApiUrl = process.env.OTHER_SYSTEM_API_URL || 'https://pagixypay.smartcartao.com.br/api/clients';
         const apiKey = process.env.OTHER_SYSTEM_API_KEY || 'sk_live_qpaoysy10eb';
         
         console.log(`[EXTERNAL-INTEGRATION] Registering user ${username} in PagixyPay...`);
@@ -773,7 +773,7 @@ async function setupApp() {
   // Test External Integration
   app.post('/api/admin/test-integration', authenticateMaster, async (req, res) => {
     try {
-      const externalApiUrl = process.env.OTHER_SYSTEM_API_URL || 'https://pagixypay.vercel.app/api/clients';
+      const externalApiUrl = process.env.OTHER_SYSTEM_API_URL || 'https://pagixypay.smartcartao.com.br/api/clients';
       const apiKey = process.env.OTHER_SYSTEM_API_KEY || 'sk_live_qpaoysy10eb';
       
       const testEmail = `test-${Date.now()}@smartcartao.com`;

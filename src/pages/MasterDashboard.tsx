@@ -3,7 +3,7 @@ import { useNavigate, Link, Routes, Route, useLocation } from 'react-router-dom'
 import { LogOut, LayoutDashboard, ShieldAlert, Users, Settings, Rocket, Globe, Menu, X, DollarSign, Layout } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useAuth } from '../contexts/AuthContext';
-import { SYSTEM_VERSION } from '../config';
+import { SYSTEM_VERSION, PAYMENT_SYSTEM_URL } from '../config';
 import MasterOverview from './master/MasterOverview';
 import MasterUsers from './master/MasterUsers';
 import MasterSettings from './master/MasterSettings';
@@ -180,8 +180,8 @@ export default function MasterDashboard() {
             {[
               { to: '/admin', icon: LayoutDashboard, label: 'Visão Geral' },
               { to: '/admin/users', icon: Users, label: 'Usuários' },
-              { to: '/admin/plans', icon: Rocket, label: 'Planos' },
-              { to: `https://pagixypay.vercel.app/login?email=${user?.email || ''}`, icon: DollarSign, label: 'Portal Financeiro', external: true },
+              { to: `/admin/plans`, icon: Rocket, label: 'Planos' },
+              { to: `${PAYMENT_SYSTEM_URL}/login?email=${user?.email || ''}`, icon: DollarSign, label: 'Portal Financeiro', external: true },
               { to: '/admin/landing', icon: Globe, label: 'Página Inicial' },
               { to: '/admin/onboarding', icon: Layout, label: 'Onboarding' },
               { to: '/admin/settings', icon: Settings, label: 'Configurações' },
