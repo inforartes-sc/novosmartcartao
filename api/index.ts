@@ -188,7 +188,39 @@ app.get('/api/admin/onboarding', authenticateMaster, async (req, res) => {
 });
 
 app.post('/api/public/onboarding', async (req, res) => {
-  await supabase.from('onboarding_submissions').insert([req.body]);
+  const { 
+    client_name, client_email, client_whatsapp, niche, setup_type, 
+    product_estimated_count, business_name, business_location, 
+    additional_notes, client_document, role_title, suggested_username, 
+    client_logo_url, suggested_password 
+  } = req.body;
+
+  const { data, error } = await supabase.from('onboarding_submissions').insert([{
+    client_name,
+    client_email,
+    client_whatsapp,
+    niche,
+    setup_type,
+    product_estimated_count,
+    business_name,
+    business_location,
+    additional_notes,
+    client_document,
+    role_title,
+    suggested_username,
+    client_logo_url,
+    suggested_password,
+    status: 'pending'
+  }]).select().single();
+  
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ success: true, data });
+});
+
+app.put('/api/admin/onboarding/:id/status', authenticateMaster, async (req, res) => {
+  const { status } = req.body;
+  const { error } = await supabase.from('onboarding_submissions').update({ status }).eq('id', req.params.id);
+  if (error) return res.status(400).json({ error: error.message });
   res.json({ success: true });
 });
 

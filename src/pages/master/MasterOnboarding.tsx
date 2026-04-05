@@ -86,7 +86,7 @@ export default function MasterOnboarding() {
   };
 
   const copyOnboardingLink = (niche: 'vehicle' | 'realestate') => {
-    const url = `${window.location.origin}/onboarding?n=${niche}`;
+    const url = `${window.location.origin}/onboarding?niche=${niche}`;
     navigator.clipboard.writeText(url);
     toast.success(`Link (${niche === 'vehicle' ? 'Veículos' : 'Imóveis'}) copiado!`, {
       icon: '🔗',
