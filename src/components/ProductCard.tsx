@@ -49,7 +49,7 @@ export default function ProductCard({
   const [isAutoPlayPaused, setIsAutoPlayPaused] = useState(false);
   const [selectedFinancingIndex, setSelectedFinancingIndex] = useState<number | null>(null);
 
-  const isRealEstate = product.niche === 'realestate' || !!product.property_status;
+  const isRealEstate = product.niche === 'realestate';
 
   const themeColor = primaryColor || '#003da5';
   const allImages = [product.image, ...(product.images || [])];
@@ -132,8 +132,8 @@ export default function ProductCard({
             referrerPolicy="no-referrer"
           />
           
-          {/* Status Tag for Real Estate - Always show if status is available */}
-          {product.property_status && (
+          {/* Status Tag for Real Estate - Only show if niche is realestate */}
+          {isRealEstate && product.property_status && (
             <div className="absolute top-3 left-3 z-10">
               <span className={`px-3 py-1 font-black text-[9px] uppercase tracking-wider rounded-lg shadow-lg border backdrop-blur-md ${
                 product.property_status === 'ready' 

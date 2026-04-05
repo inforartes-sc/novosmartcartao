@@ -350,7 +350,8 @@ export default function Catalog() {
                         cash_price: product.cash_price,
                         card_installments: product.card_installments,
                         card_interest: !!product.card_interest,
-                        property_status: product.property_status
+                        property_status: product.property_status,
+                        niche: product.niche || user.niche
                       }} 
                       whatsappNumber={user.whatsapp}
                       primaryColor={user.primary_color}
@@ -396,7 +397,8 @@ export default function Catalog() {
                           cash_price: product.cash_price,
                           card_installments: product.card_installments,
                           card_interest: !!product.card_interest,
-                          property_status: product.property_status
+                          property_status: product.property_status,
+                          niche: product.niche || user.niche
                         }} 
                         whatsappNumber={user.whatsapp}
                         primaryColor={user.primary_color}
