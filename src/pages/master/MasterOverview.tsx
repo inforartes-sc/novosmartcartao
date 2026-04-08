@@ -112,19 +112,57 @@ export default function MasterOverview({ stats }: Props) {
         </div>
       </div>
 
-      {/* Bonus Banner */}
-      <div className="bg-[#0f172a] p-10 rounded-[48px] text-white shadow-2xl relative overflow-hidden group">
-         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:bg-blue-600/20 transition-all duration-1000"></div>
-         <div className="relative z-10">
-           <div className="flex items-center gap-3 mb-4">
-              <div className="px-3 py-1 bg-blue-600 text-[10px] font-black uppercase tracking-widest rounded-lg">Master Access</div>
-              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{SYSTEM_VERSION}</div>
+      {/* Guia do Administrador */}
+      <div className="bg-white p-10 rounded-[48px] border border-blue-100 shadow-xl shadow-blue-50/50">
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200">
+            <Shield className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h3 className="text-2xl font-black text-gray-900 tracking-tight">Guia do Administrador Master</h3>
+            <p className="text-sm text-gray-400 font-medium">Instruções essenciais para gestão do sistema</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-black text-xs">01</span>
+              <h4 className="font-bold text-gray-800 uppercase tracking-tight text-xs">Gestão de Usuários</h4>
+            </div>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              No menu <b>Usuários</b>, você pode criar novas contas, resetar senhas e alternar o status de <b>Master Admin</b>. Novos usuários recebem automaticamente as configurações padrão definidas em "Configurações".
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-black text-xs">02</span>
+              <h4 className="font-bold text-gray-800 uppercase tracking-tight text-xs">Onboarding & Nichos</h4>
+            </div>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              Utilize o menu <b>Onboarding</b> para gerar links específicos para <b>Veículos</b> ou <b>Imobiliárias</b>. Após o cliente preencher o formulário, ele aparecerá na lista para ativação rápida.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-black text-xs">03</span>
+              <h4 className="font-bold text-gray-800 uppercase tracking-tight text-xs">Faturamento (PagixyPay)</h4>
+            </div>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              O sistema está integrado ao <b>Portal Financeiro</b>. No menu <b>Financeiro</b> ou <b>Configurações</b>, você pode testar a conexão e garantir que as faturas estão sendo geradas corretamente.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-10 p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between">
+           <div className="flex items-center gap-3">
+             <Rocket className="w-4 h-4 text-blue-500" />
+             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Suporte Técnico Ativado</span>
            </div>
-           <h3 className="text-3xl font-black mb-3 tracking-tighter">Painel de Controle Estratégico</h3>
-           <p className="text-sm text-slate-400 max-w-sm font-medium leading-relaxed">
-             Gerencie o ecossistema completo do Smart Cartão. Acompanhe o crescimento dos seus consultores e a validade de todos os planos.
-           </p>
-         </div>
+           <p className="text-[10px] font-bold text-blue-600 uppercase tracking-tight">v{SYSTEM_VERSION} • AMBIENTE DE ALTA DISPONIBILIDADE</p>
+        </div>
       </div>
     </div>
   );

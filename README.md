@@ -1,20 +1,55 @@
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+<img width="1200" height="475" alt="Banner Smart Cartão" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Run and deploy your AI Studio app
+# Smart Cartão 🚀
 
-This contains everything you need to run your app locally.
+O seu ecossistema definitivo para cartões digitais e catálogos profissionais. Desenvolvido com foco em alta performance e design premium.
 
-View your app in AI Studio: https://ai.studio/apps/017ac909-da0b-47cb-bc5f-77acd92530d3
+---
 
-## Run Locally
+### 🌐 Visualize seu App no AI Studio
+Confira a versão ao vivo: [https://ai.studio/apps/017ac909-da0b-47cb-bc5f-77acd92530d3](https://ai.studio/apps/017ac909-da0b-47cb-bc5f-77acd92530d3)
 
-**Prerequisites:**  Node.js
+---
 
+## 🛠️ Como Rodar Localmente
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Siga os passos abaixo para preparar seu ambiente de desenvolvimento:
+
+### Pré-requisitos
+- **Node.js** (Versão estável recomendada)
+- **NPM** (Instalado com o Node)
+
+### Passo a Passo
+
+1. **Instale as dependências:**
+   ```bash
+   npm install
+   ```
+
+2. **Configure o ambiente:**
+   Crie ou edite o arquivo `.env.local` na raiz do projeto e adicione sua chave de API do Gemini:
+   ```env
+   GEMINI_API_KEY=sua_chave_aqui
+   ```
+
+3. **Inicie o servidor de desenvolvimento:**
+   ```bash
+   npm run dev
+   ```
+
+---
+
+## 🧠 Tecnologia & Arquitetura
+
+Este projeto utiliza:
+- **React + Vite** para uma interface rápida e reativa.
+- **Supabase** para persistência de dados e autenticação robusta.
+- **Tailwind CSS + Framer Motion** para uma experiência visual premium e animações fluidas.
+- **Node.js** com proxies inteligentes para comunicação com o backend.
+
+---
+<div align="center">
+  <p>Orgulhosamente desenvolvido por <b>Antigravity AI</b> • © 2026 Smart Cartão</p>
+</div>

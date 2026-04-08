@@ -8,6 +8,7 @@ export interface Product {
   liberacredImage?: string;
   financingInfo?: string;
   hasLiberacred?: boolean;
+  has_liberacred?: boolean;
   images?: string[];
   threeSixtyImages?: string[];
   year?: number;

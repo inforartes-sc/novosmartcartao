@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { uploadImage } from '../lib/supabase';
 import { motion } from 'motion/react';
-import { Plus, Trash2, Package, Camera, Loader2, Edit2, X, Check, Copy, Calculator, Search, Home as HomeIcon, MapPin, Maximize, Bed, Bath, Car, ArrowRightLeft } from 'lucide-react';
+import { Plus, Trash2, Package, Camera, Loader2, Edit2, X, Check, Copy, Calculator, Search, Home as HomeIcon, MapPin, Maximize, Bed, Bath, Car, ArrowRightLeft, CreditCard } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function AdminProducts() {
@@ -509,6 +509,16 @@ export default function AdminProducts() {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">Descrição Detalhada</label>
+                <textarea
+                  value={formState.description}
+                  onChange={(e) => setFormState({ ...formState, description: e.target.value })}
+                  className="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all h-40 resize-none"
+                  placeholder="Descreva aqui todos os detalhes do produto..."
+                />
+              </div>
+
               {/* Informações do Veículo / Imóvel */}
               <div className="bg-gray-50/50 p-6 rounded-3xl border border-gray-100 space-y-6">
                 <div className="flex items-center gap-2 mb-2">
@@ -866,7 +876,7 @@ export default function AdminProducts() {
                         onClick={addPlan}
                         className="mt-5 px-4 py-2 bg-purple-600 text-white rounded-xl font-bold text-xs uppercase hover:bg-purple-700 transition-colors shadow-lg shadow-purple-100"
                       >
-                        + Add Plano
+                        + Adicionar Plano
                       </button>
                     </div>
                   </div>
@@ -1020,6 +1030,46 @@ export default function AdminProducts() {
                 </div>
               )}
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
+                <div className="bg-orange-50/30 p-6 rounded-3xl border border-orange-100 flex flex-col gap-4 transition-all hover:shadow-md">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 bg-orange-100 rounded-xl text-orange-600">
+                        <Package className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-lg font-bold text-gray-800">Destaque</h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormState(prev => ({ ...prev, is_highlighted: !prev.is_highlighted }))}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formState.is_highlighted ? 'bg-orange-600' : 'bg-gray-200'}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formState.is_highlighted ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
+                  <p className="text-xs text-orange-700/60 font-bold uppercase tracking-wider">Aparecer no topo do catálogo</p>
+                </div>
+
+                <div className="bg-amber-50/30 p-6 rounded-3xl border border-amber-100 flex flex-col gap-4 transition-all hover:shadow-md">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 bg-amber-100 rounded-xl text-amber-600">
+                        <CreditCard className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-lg font-bold text-gray-800">Libe Card</h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormState(prev => ({ ...prev, has_liberacred: !prev.has_liberacred }))}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formState.has_liberacred ? 'bg-amber-600' : 'bg-gray-200'}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formState.has_liberacred ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
+                  <p className="text-xs text-amber-700/60 font-bold uppercase tracking-wider">Habilitar Banner Liberacred</p>
+                </div>
+              </div>
+
               {/* Opcionais */}
               <div className="bg-gray-50/50 p-6 rounded-3xl border border-gray-100">
                 <div className="flex items-center gap-2 mb-4">
@@ -1108,6 +1158,16 @@ export default function AdminProducts() {
                   {product.niche === 'realestate' && (
                     <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-black uppercase rounded-full border border-blue-100">
                       Imóvel
+                    </span>
+                  )}
+                  {product.is_highlighted && (
+                    <span className="px-2 py-0.5 bg-orange-50 text-orange-600 text-[10px] font-black uppercase rounded-full border border-orange-100">
+                      Destaque
+                    </span>
+                  )}
+                  {product.has_liberacred && (
+                    <span className="px-2 py-0.5 bg-amber-50 text-amber-600 text-[10px] font-black uppercase rounded-full border border-amber-100">
+                      Libe Card
                     </span>
                   )}
                 </div>
